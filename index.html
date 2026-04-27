@@ -4,40 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#5c6ac4" />
+    <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <title>Turismo Beluso Bueu</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;600;800&display=swap" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="icon" type="image/webp" href="/assets/icons/icon-48.webp" />
   </head>
   <body>
 
 
     <!-- Contenedor Principal (Bloqueado a tamaño móvil) -->
     <div id="app">
-      <!-- Fondos de Clima Animados -->
-      <div id="weather-bg-container">
-        <div id="bg-sunny" class="weather-bg-state bg-sunny active">
-          <div class="sun-glow"></div>
-        </div>
-        <div id="bg-cloudy" class="weather-bg-state bg-cloudy">
-          <div class="bg-cloud" style="top: 10%; width: 400px; height: 150px; background: rgba(255,255,255,0.5);"></div>
-          <div class="bg-cloud" style="top: 40%; width: 300px; height: 120px; animation-delay: -10s;"></div>
-        </div>
-        <div id="bg-rain" class="weather-bg-state bg-rain">
-          <div class="full-screen-rain"></div>
-        </div>
-      </div>
 
-      <!-- Interfaz Superior (Logo y Controles) -->
-      <header class="app-header" id="app-header">
-        <div class="logo">
-          <h1>Explora Beluso</h1>
-          <p>Tu Guía de Turismo</p>
-        </div>
-      </header>
 
-      <!-- Mapa de pantalla completa -->
+
+
       <div id="map"></div>
+
+      <!-- Botón Flotante Admin -->
+      <button id="btn-admin-toggle" class="admin-toggle-btn" title="Modo Administrador">
+        <span>⚙️</span>
+      </button>
 
       <!-- Contenedor de Capas del Mapa -->
       <div id="map-layers-container"></div>
@@ -47,40 +35,43 @@
         <div class="weather-bg-layers">
           <div class="widget-rays" id="widget-rays"></div>
           <div class="widget-drift"></div>
+          <div class="widget-clouds-container">
+            <div class="widget-cloud c1"></div>
+            <div class="widget-cloud c2"></div>
+            <div class="widget-cloud c3"></div>
+          </div>
         </div>
         <div class="weather-character" id="weather-char">
-          <div class="cloud-body" id="character-body">
-            <div class="sun-rays" id="sun-rays" style="display: none;"></div>
-            <div class="eyes">
-              <div class="eye left"></div>
-              <div class="eye right"></div>
+          <div class="mascot-container" id="mascot">
+            <!-- El contenido se generará por CSS según la clase del widget -->
+            <div class="mascot-body"></div>
+            <div class="mascot-arm left"></div>
+            <div class="mascot-arm right"></div>
+            <div class="mascot-face">
+              <div class="mascot-eye left"></div>
+              <div class="mascot-eye right"></div>
+              <div class="mascot-mouth"></div>
             </div>
-            <div class="blush left"></div>
-            <div class="blush right"></div>
-            <div class="mouth" id="character-mouth"></div>
           </div>
-          <div class="hand left-hand" id="left-hand">
-             <div class="flag-pole">
-                <div class="flag" id="bathing-flag"></div>
-             </div>
-          </div>
-          <div class="hand right-hand" id="right-hand"></div>
           <div class="rain-container" id="rain"></div>
         </div>
         <div class="weather-info">
           <div style="display:flex; flex-direction:column; gap:2px;">
-            <h2 id="weather-desc" style="font-size:16px; margin:0; color:#1e3a8a;">Cargando...</h2>
-            <p id="weather-updated" style="font-size:9px; color:#666; margin:0; font-weight:600; opacity:0.8;">Sincronizando...</p>
+            <h2 id="weather-desc" style="font-size:16px; margin:0; color:var(--text-primary);">Cargando...</h2>
+            <p id="weather-updated" style="font-size:9px; color:var(--text-secondary); margin:0; font-weight:600;">Sincronizando...</p>
           </div>
-          <p class="temperature" style="margin:5px 0; color:#1e3a8a;"><span id="temp-val">--</span>°<small>C</small></p>
+          <p class="temperature" style="margin:5px 0; color:var(--text-primary);"><span id="temp-val">--</span>°<small>C</small></p>
         </div>
       </div>
       
       <!-- Panel de Detalles Turísticos (Bottom Sheet) -->
       <div class="bottom-sheet" id="bottom-sheet">
-        <div class="drag-handle"></div>
-        <h3 id="sheet-title">Detalles del Lugar</h3>
-        <div class="poi-card" id="active-poi-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 0 20px; flex-shrink:0;">
+          <div style="width:48px; height:5px; background:rgba(255,255,255,0.2); border-radius:3px;"></div>
+          <button id="btn-close-bottom-sheet" class="close-btn" style="background:rgba(255,255,255,0.1); color:white; border:none;">✕</button>
+        </div>
+        <h3 id="sheet-title" style="padding: 12px 20px 0 20px; margin:0; flex-shrink:0;">Detalles del Lugar</h3>
+        <div class="poi-card" id="active-poi-card" style="padding: 16px 20px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:16px;">
           <div class="media-container" id="poi-media" style="position: relative;">
             <div id="carousel-counter" class="carousel-counter">1 / 1</div>
             <img id="poi-img" src="" alt="Vista" />
@@ -93,24 +84,87 @@
             <h4 id="poi-name">Cargando...</h4>
             <div id="poi-distance" style="font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;"></div>
             <p id="poi-desc">...</p>
-            <button class="btn-primary" id="btn-action">Ir al Lugar</button>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <button class="btn-primary" id="btn-action">Centrar en el Mapa</button>
+              <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" id="btn-google-maps" style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <span>🌐</span> Google Maps
+                </button>
+                <button id="btn-toggle-favorite" class="btn-secondary" style="flex: 1; padding: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">❤️</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Controles de Mapa de Administrador -->
-      <div id="admin-controls" class="admin-hidden">
-        <div class="admin-banner">Modo Administrador Activo</div>
-        <p class="admin-hint">Toca en cualquier sitio del mapa para añadir un nuevo punto.</p>
+      <!-- Admin controls removed: admin mode is disabled for a professional UI -->
+
+      <!-- Botón de Mi Ubicación -->
+      <button id="btn-locate-me" class="locate-me-btn" title="Mi Ubicación">
+        <img src="/assets/Animacion/belusin1.png" alt="Locate" style="width: 100%; height: 100%; object-fit: contain;" />
+      </button>
+
+      <div id="route-overlay" class="route-info-overlay hidden">
+        <div class="route-header" style="display:flex; justify-content:space-between; align-items:center;">
+           <div>
+             <span id="route-current-name" style="font-weight: 800; color: #fff; font-size: 14px;">Nueva Ruta</span>
+             <span id="route-total-distance" class="value" style="margin-left: 8px;">0.00 km</span>
+           </div>
+           <button id="btn-close-route" class="close-btn" style="width:28px; height:28px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; border:none; cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top: 8px;">
+          <button id="btn-save-route-ui" class="btn-clear" style="background:rgba(34,197,94,0.85);">💾 Guardar</button>
+          <button id="btn-share-route" class="btn-clear" style="background:rgba(59,130,246,0.85);">📤 Compartir</button>
+          <button id="btn-list-routes" class="btn-clear" style="background:rgba(139, 92, 246, 0.85);">📖 Mis Rutas</button>
+          <button id="btn-clear-route" class="btn-clear">🗑️ Borrar</button>
+        </div>
       </div>
 
-      <!-- Superposición de Información de Ruta -->
-      <div id="route-overlay" class="route-info-overlay hidden">
-        <div class="route-stat">
-          <span class="label">Total Ruta:</span>
-          <span id="route-total-distance" class="value">0.00 km</span>
+      <!-- Modal de Rutas Guardadas -->
+      <div id="routes-list-modal" class="modal hidden">
+        <div class="modal-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 16px; flex-shrink:0;">
+            <h3 style="margin: 0;">Mis Rutas Guardadas</h3>
+            <button id="btn-close-routes-list" class="close-btn" style="background:rgba(255,255,255,0.1); color:white; border:none;">✕</button>
+          </div>
+          <div id="saved-routes-container" style="flex:1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 0 24px 24px;">
+            <!-- Rutas guardadas se inyectarán aquí -->
+          </div>
         </div>
-        <button id="btn-clear-route" class="btn-clear">Borrar Ruta</button>
+      </div>
+
+      <!-- Modal de Planes (Favoritos + Recomendaciones) -->
+      <div id="planes-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header-tabs" style="padding: 24px 24px 16px; flex-shrink:0;">
+            <div class="planes-tabs">
+              <button class="plane-tab-btn active" data-plane-tab="recomendados">✨ Recomendaciones</button>
+              <button class="plane-tab-btn" data-plane-tab="favoritos">❤️ Mis Favoritos</button>
+            </div>
+            <button id="btn-close-planes" class="close-btn" style="background:rgba(255,255,255,0.1); color:white; border:none;">✕</button>
+          </div>
+          
+          <div id="tab-recomendados" class="plane-tab-content active">
+            <div id="rainy-plans-list" class="rainy-plans-grid">
+              <!-- Planes de lluvia inyectados aquí -->
+            </div>
+            
+            <!-- Vista de Detalle del Plan (Oculta por defecto) -->
+            <div id="plan-detail-view" class="plan-detail-container hidden">
+              <button id="btn-back-to-plans" class="back-btn">← Volver a los planes</button>
+              <div id="plan-detail-content">
+                <!-- Se rellena dinámicamente -->
+              </div>
+              <button id="btn-start-plan" class="btn-primary" style="margin-top: 25px; height: 60px; font-size: 18px;">✨ ¡Vamos allá!</button>
+            </div>
+          </div>
+
+          <div id="tab-favoritos" class="plane-tab-content">
+            <div id="favorites-list" class="favorites-container">
+              <!-- Lugares favoritos inyectados aquí -->
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Modal de Administración -->
@@ -120,22 +174,25 @@
           <form id="poi-form">
             <input type="hidden" id="poi-id" />
             
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-              <div style="flex: 1;">
-                <label style="font-size: 11px; color: #666; margin-bottom: 4px; display: block;">Latitud</label>
-                <input type="number" step="any" id="poi-lat" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd;" />
-              </div>
-              <div style="flex: 1;">
-                <label style="font-size: 11px; color: #666; margin-bottom: 4px; display: block;">Longitud</label>
-                <input type="number" step="any" id="poi-lng" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd;" />
+            <div class="coordinates-section" style="background: rgba(15, 23, 42, 0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+              <span style="font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">📍 Ubicación Precisa</span>
+              <div style="display: flex; gap: 12px;">
+                <div style="flex: 1;">
+                  <label style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block;">Latitud</label>
+                  <input type="number" step="any" id="poi-lat" required style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 14px; font-weight: 600;" />
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block;">Longitud</label>
+                  <input type="number" step="any" id="poi-lng" required style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 14px; font-weight: 600;" />
+                </div>
               </div>
             </div>
             
             <label>Nombre del Lugar</label>
-            <input type="text" id="poi-input-name" required placeholder="Ej: Playa de Beluso" />
+            <input type="text" id="poi-input-name" required placeholder="Ej: Playa de Beluso" style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;" />
 
             <label>Categoría</label>
-            <select id="poi-input-cat" required style="width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #ccc; font-family: inherit; font-size: 14px; background: #f9f9f9;">
+            <select id="poi-input-cat" required style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;">
               <option value="playa">🏖️ Playa / Naturaleza</option>
               <option value="restaurante">🍽️ Restaurante</option>
               <option value="museo">🏛️ Patrimonio / Museo</option>
@@ -144,13 +201,13 @@
             </select>
             
             <label>Descripción</label>
-            <textarea id="poi-input-desc" required placeholder="Describe el lugar..."></textarea>
+            <textarea id="poi-input-desc" required placeholder="Describe el lugar..." style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600; resize: none; height: 100px;"></textarea>
             
             <label>URL de Imagen (Opcional)</label>
-            <input type="url" id="poi-input-img" placeholder="https://..." />
+            <input type="url" id="poi-input-img" placeholder="https://..." style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;" />
 
             <label>URL de Video MP4 (Opcional)</label>
-            <input type="url" id="poi-input-vid" placeholder="https://...mp4" />
+            <input type="url" id="poi-input-vid" placeholder="https://...mp4" style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;" />
 
             <div class="modal-actions">
               <button type="button" class="btn-danger" id="btn-delete-poi" style="display: none;">Eliminar</button>
@@ -229,24 +286,24 @@
             </div>
             
             <div class="forecast-section-title">Gráfico de Hoy</div>
-            <div class="tide-graph-container" style="background: white; border-radius: 20px; padding: 20px 15px 35px 15px; border: 1px solid #f1f5f9; margin-top: 10px; position: relative;">
+            <div class="tide-graph-container" style="background: rgba(15, 23, 42, 0.4); border-radius: 20px; padding: 20px 15px 35px 15px; border: 1px solid var(--glass-border); margin-top: 10px; position: relative; backdrop-filter: blur(5px);">
               <svg viewBox="0 0 100 50" class="tide-svg" style="width: 100%; height: auto; display: block; overflow: visible;">
                 <defs>
                   <linearGradient id="tide-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" style="stop-color:#3b82f6; stop-opacity:0.6" />
-                    <stop offset="100%" style="stop-color:#dbeafe; stop-opacity:0.4" />
+                    <stop offset="0%" style="stop-color:var(--primary); stop-opacity:0.6" />
+                    <stop offset="100%" style="stop-color:var(--primary); stop-opacity:0.2" />
                   </linearGradient>
                 </defs>
                 <!-- Grid Lines -->
-                <line x1="0" y1="10" x2="100" y2="10" stroke="#f1f5f9" stroke-width="0.3" />
-                <line x1="0" y1="25" x2="100" y2="25" stroke="#f1f5f9" stroke-width="0.3" />
-                <line x1="0" y1="40" x2="100" y2="40" stroke="#f1f5f9" stroke-width="0.3" />
+                <line x1="0" y1="10" x2="100" y2="10" stroke="var(--glass-border)" stroke-width="0.3" />
+                <line x1="0" y1="25" x2="100" y2="25" stroke="var(--glass-border)" stroke-width="0.3" />
+                <line x1="0" y1="40" x2="100" y2="40" stroke="var(--glass-border)" stroke-width="0.3" />
                 
                 <!-- The Wave -->
-                <path id="tide-path" d="M 0 50 L 0 50 L 100 50 L 100 50 Z" fill="url(#tide-grad)" stroke="#2563eb" stroke-width="1.2" />
+                <path id="tide-path" d="M 0 50 L 0 50 L 100 50 L 100 50 Z" fill="url(#tide-grad)" stroke="var(--primary)" stroke-width="1.2" />
                 
                 <!-- Capa de Etiquetas -->
-                <g id="tide-labels-layer" style="font-size: 3px; font-family: sans-serif; fill: #64748b; font-weight: 600;"></g>
+                <g id="tide-labels-layer" style="font-size: 3.5px; font-family: inherit; fill: var(--text-primary); font-weight: 600;"></g>
 
                 <!-- Marcador de Hora Actual -->
                 <line id="tide-now-marker" x1="0" y1="0" x2="0" y2="50" stroke="#ef4444" stroke-width="0.5" stroke-dasharray="1,1" style="display: none;" />
@@ -261,17 +318,16 @@
 
       <!-- Events Modal -->
       <div id="events-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 450px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="modal-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 16px; flex-shrink:0;">
             <h3 style="margin: 0;">Próximos Eventos</h3>
-            <button id="btn-close-events" class="close-btn">✕</button>
+            <button id="btn-close-events" class="close-btn" style="background:rgba(255,255,255,0.1); color:white; border:none;">✕</button>
           </div>
-          <div id="events-list" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 5px;">
+          <div id="events-list" style="flex:1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 0 24px 24px;">
             <!-- Las tarjetas de eventos se injectarán aquí -->
           </div>
         </div>
       </div>
-
       <!-- BARRA DE NAVEGACIÓN INFERIOR -->
       <nav class="bottom-nav">
         <a href="#" class="nav-item active" id="nav-explorar">
@@ -282,9 +338,9 @@
           <span class="nav-icon">📅</span>
           <span>Eventos</span>
         </a>
-        <a href="#" class="nav-item" id="nav-rutas">
-          <span class="nav-icon">🧭</span>
-          <span>Mi Inicio</span>
+        <a href="#" class="nav-item" id="nav-favoritos">
+          <span class="nav-icon">☂️</span>
+          <span>Planes</span>
         </a>
 
         <a href="#" class="nav-item" id="nav-mareas">
@@ -297,10 +353,6 @@
           <span>Mi Ruta</span>
         </a>
 
-        <a href="#" class="nav-item" id="admin-toggle">
-          <span class="nav-icon">⚙️</span>
-          <span id="admin-nav-text">Admin</span>
-        </a>
       </nav>
 
     </div>

@@ -24,7 +24,19 @@ dist-ssr
 *.sw?
 
 # Mobile Builds
-android/app/build
-ios/App/build
+android/app/build*
 android/.gradle
-ios/Pods
+ios/App/build
+
+# Firebase
+.firebase
+firebase-debug.log*
+
+# Other
+.env*
+node_modules
+dist
+dist-ssr
+*.local
+
+

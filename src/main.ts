@@ -1,57 +1,12 @@
 import './style.css';
 import L from 'leaflet';
+import { DEFAULT_POIS } from './data/pois';
+import type { POI, POICategory } from './models/poi';
+import { EVENTS_DATA } from './data/events';
+import { CATEGORY_EMOJIS } from './data/categories';
+import { RAINY_PLANS } from './data/rainy_plans';
 
-type POICategory = 'playa' | 'restaurante' | 'museo' | 'inicio' | 'generico';
-
-interface POI {
-  id: string;
-  lat: number;
-  lng: number;
-  name: string;
-  description: string;
-  category: POICategory;
-  imgUrl?: string;
-  imgUrls?: string[];
-  vidUrl?: string;
-  isInitial?: boolean;
-}
-
-
-interface Evento {
-  id: string;
-  name: string;
-  date: string;
-  description: string;
-  lat: number;
-  lng: number;
-}
-
-const EVENTS_DATA: Evento[] = [
-  {
-    id: 'ev-1',
-    name: 'Fiesta de San Fins',
-    date: '1 de Agosto, 2026',
-    description: 'Tradicional fiesta local en Beluso con música en directo y gastronomía.',
-    lat: 42.3315,
-    lng: -8.8160
-  },
-  {
-    id: 'ev-2',
-    name: 'Ruta de Senderismo Cabo Udra',
-    date: '15 de Agosto, 2026',
-    description: 'Visita guiada por el espacio protegido de Cabo Udra al atardecer.',
-    lat: 42.3276,
-    lng: -8.8286
-  },
-  {
-    id: 'ev-3',
-    name: 'Mercadillo de Artesanía',
-    date: '22 de Agosto, 2026',
-    description: 'Venta de productos locales y artesanía en el puerto de Beluso.',
-    lat: 42.3312,
-    lng: -8.8155
-  }
-];
+// EVENTS moved to data/events.ts; imported as EVENTS_DATA
 
 const calculateTidesForDate = (date: Date) => {
   // Referencia: Una marea alta en Bueu (aprox) el 01-04-2024 a las 03:00
@@ -86,179 +41,9 @@ const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => 
   return R * c;
 };
 
-const CATEGORY_EMOJIS: Record<POICategory, string> = {
-  playa: '🏖️',
-  restaurante: '🍽️',
-  museo: '🏛️',
-  inicio: '🏡',
-  generico: '📍'
-};
+// CATEGORY_EMOJIS now defined in data/categories.ts and imported as CATEGORY_EMOJIS
 
-const DEFAULT_POIS: POI[] = [
-  {
-    id: 'poi-main-villa-jenny',
-    lat: 42.332029,
-    lng: -8.814324,
-    name: 'Villa Jenny',
-    description: 'Tu punto de partida en el corazón de Beluso.',
-    category: 'inicio',
-    imgUrl: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=300&q=80',
-    isInitial: true
-  },
-  {
-    id: 'poi-centoleira',
-    lat: 42.330089,
-    lng: -8.816670,
-    name: 'Restaurante A Centoleira',
-    description: 'Emblemático restaurante en la playa de Beluso, famoso por su marisco.',
-    category: 'restaurante',
-    imgUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-peixoto',
-    lat: 42.331200,
-    lng: -8.815500,
-    name: 'Restaurante Peixoto',
-    description: 'Conocido por sus vistas al puerto deportivo y excelentes pescados.',
-    category: 'restaurante',
-    imgUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-udra',
-    lat: 42.3412,
-    lng: -8.8349,
-    name: 'Cabo Udra',
-    description: 'Un mirador natural con multitud de sendas conectadas entre si que recorren todo el cabo entre rocas erosionadas por el viento, donde se juntan la Ría de Pontevedra al norte, y la Ría de Aldán al sur, y enfrente la Isla de Ons, pertenecientes al Parque Nacional Marítimo Terrestre de As Illas Atlánticas.\n\nEn los alrededores de Cabo Udra se encuentran las ruinas de un cuartel militar conocido como Batería J-2 que formaba parte del sistema defensivo, una estación meteorológica, el Aula de la Naturaleza y en frente un chiringuito donde tomar algo. También a un lado del camino podemos ver un cruceiro bastante curioso, que suelen marcar los cruces de caminos, y los chouzos de Chan de Esqueiros, que son refugios construidos para los pastores de la zona, aprovechando los huecos de las rocas y tapando con losas para poder pasar la noche con su ganado.\n\nAl final de la tarde recomiendo que te acomodes un momento en las piedras, te aseguro que el atardecer en Cabo Udra es espectacular.',
-    category: 'playa',
-    imgUrls: [
-      '/assets/pois/Cabo Udra/1.jpg',
-      '/assets/pois/Cabo Udra/2.jpg',
-      '/assets/pois/Cabo Udra/3.jpg',
-      '/assets/pois/Cabo Udra/chouzos.jpg',
-      '/assets/pois/Cabo Udra/cruceiro.jpg'
-    ]
-  },
-  {
-    id: 'poi-tuia',
-    lat: 42.321000,
-    lng: -8.821000,
-    name: 'Playa de Tuia',
-    description: 'Arenal extenso y rodeado de naturaleza. Ideal para un día tranquilo.',
-    category: 'playa',
-    imgUrl: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-museo',
-    lat: 42.326972,
-    lng: -8.785167,
-    name: 'Museo Massó (Bueu)',
-    description: 'Historia marinera, conservera y tradición de construcción de barcos.',
-    category: 'museo',
-    imgUrl: 'https://images.unsplash.com/photo-1554907984-15263bfd63bd?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-pedron-v2',
-    lat: 42.340583,
-    lng: -8.826278,
-    name: 'Playa de Pedrón',
-    description: 'Cala virgen y salvaje, rodeada de pinos y rocas. Un rincón natural de gran belleza para desconectar.',
-    category: 'playa',
-    imgUrl: 'https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-sartaxens-v2',
-    lat: 42.338583,
-    lng: -8.807944,
-    name: 'Playa de Sartaxéns',
-    description: 'Pequeña cala de aguas tranquilas y cristalinas, ideal para disfrutar del entorno natural en privacidad.',
-    category: 'playa',
-    imgUrl: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-bon',
-    lat: 42.3168516,
-    lng: -8.8207187,
-    name: 'Area de Bon',
-    description: 'Playa de arena gruesa, sitio para aparcar, duchas, baños y dos chiringuitos donde puedes llevar tu propia comida y pedir allí la bebida.',
-    category: 'playa',
-    imgUrls: [
-      '/assets/pois/Area do Bon/1.jpg',
-      '/assets/pois/Area do Bon/2.jpg',
-      '/assets/pois/Area do Bon/3.jpg'
-    ]
-  },
-  {
-    id: 'poi-iglesia-beluso',
-    lat: 42.330806,
-    lng: -8.813583,
-    name: 'Iglesia Santa María Beluso',
-    description: 'Monumento del siglo XII con reformas posteriores. Un remanso de paz con gran valor histórico.',
-    category: 'museo',
-    imgUrl: 'https://images.unsplash.com/photo-1548678912-4192a65cc9f6?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-pantalan',
-    lat: 42.331200,
-    lng: -8.816000,
-    name: 'Pantalán de Beluso',
-    description: 'Zona de amarre tradicional donde se pueden ver dornas y barcos de pesca artesanal.',
-    category: 'generico',
-    imgUrl: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&w=300&q=80'
-  },
-  {
-    id: 'poi-lagos',
-    lat: 42.324556,
-    lng: -8.825452,
-    name: 'Praia de Lagos',
-    description: 'Playa de Lagos, a 4 minutos en coche desde la casa, es una playa pequeña de arena blanca que pertenece a la zona protegida del Cabo de Udra. Desde allí podemos ver al fondo la Isla de Ons del Parque Natural de las Islas Atlánticas.',
-    category: 'playa',
-    imgUrls: [
-      '/assets/pois/Praia de Lagos/105974scr_3fb901e888d0e43.jpg',
-      '/assets/pois/Praia de Lagos/107454scr_d96f10155de3122.jpg',
-      '/assets/pois/Praia de Lagos/95872scr_fc6ac388688cf6a.jpg'
-    ]
-  },
-  {
-    id: 'poi-ancoradoiro',
-    lat: 42.333800,
-    lng: -8.826700,
-    name: 'Playa de Ancoradoiro',
-    description: 'Es una pequeña playa de poco más de 100 metros de longitud rodeada de rocas a la que se accede por un camino de tierra desde el aparcamiento de Cabo Udra, quizá un poco dificultoso para niños pequeños o personas con movilidad reducida, no hay socorristas ni servicios, pero se trata de un lugar salvaje y tranquilo, perfecto para quienes huyen de masificaciones y buscan relajarse.',
-    category: 'playa',
-    imgUrls: [
-      '/assets/pois/Playa de Ancoradouro/1.jpg',
-      '/assets/pois/Playa de Ancoradouro/2.jpg',
-      '/assets/pois/Playa de Ancoradouro/3.jpg'
-    ]
-  },
-  {
-    id: 'poi-humedal',
-    lat: 42.3290676,
-    lng: -8.8251677,
-    name: 'Humedal de Escorregadoiro',
-    description: 'Este humedal forma parte de un sendero litoral de gran valor ecológico, es perfecto para dar un paseo por la naturaleza por caminos que parecen sacados de cuento.',
-    category: 'playa',
-    imgUrls: [
-      '/assets/pois/Humedal de Escorregadoiro/1.jpg',
-      '/assets/pois/Humedal de Escorregadoiro/2.jpg',
-      '/assets/pois/Humedal de Escorregadoiro/3.jpg'
-    ]
-  },
-  {
-    id: 'poi-capilla-reyes',
-    lat: 42.3424164,
-    lng: -8.7909247,
-    name: 'Capilla Santos Reyes',
-    description: 'En caso de que te apetezca conocer un poco más de nuestro patrimonio, a 7 minutos en coche se encuentra esta pequeña capilla dedicada a los Reyes Magos. Aunque la actual es del s.XX, la original es del año 1686. En el exterior están representados la Virgen y San José, y en las esquinas los cuatro evangelistas, además tiene la peculiaridad de tener multitud de elementos decorativos relacionados con el mar como conchas marinas, ballenas, timones, anclas...',
-    category: 'museo',
-    imgUrls: [
-      '/assets/pois/Capilla Santos Reyes/1.jpg',
-      '/assets/pois/Capilla Santos Reyes/2.jpg'
-    ]
-  }
-];
-
-
+// DEFAULT_POIS now imported from src/data/pois.ts
 document.addEventListener('DOMContentLoaded', () => {
   // --- 1. Inicialización del Mapa ---
   const mapCenter: L.LatLngTuple = [DEFAULT_POIS[0].lat, DEFAULT_POIS[0].lng];
@@ -267,33 +52,23 @@ document.addEventListener('DOMContentLoaded', () => {
     attributionControl: false
   }).setView(mapCenter, 14);
 
-  // Remoción solicitada de controles zoom +/-
-  // L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-  const standardLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20
+  const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
   });
-  const satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: ''
-  });
-  const trafficLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: ''
+  const roadmapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   });
 
-  standardLayer.addTo(map);
+  satelliteLayer.addTo(map);
 
   const baseMaps = {
-    "Mapa": standardLayer,
-    "Satélite": satelliteLayer
+    "Satélite": satelliteLayer,
+    "Mapa": roadmapLayer
   };
 
-  const overlayMaps = {
-    "Tráfico": trafficLayer
-  };
+  const overlayMaps = {};
 
   const layersControl = L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(map);
   const layersContainer = document.getElementById('map-layers-container');
@@ -303,16 +78,142 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- 2. Gestión de Estado y Datos ---
   const STORAGE_KEY = 'beluso_pois_v2';
+  const ROUTE_STORAGE_KEY = 'beluso_saved_route_v1';
+  const MULTI_ROUTES_KEY = 'beluso_multi_routes_v2';
+  const FAVORITES_KEY = 'beluso_favorites_v1';
+
   let pois: POI[] = [...DEFAULT_POIS];
+  let favorites: string[] = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+  let savedRoutes: { name: string, pois: string[] }[] = JSON.parse(localStorage.getItem(MULTI_ROUTES_KEY) || '[]');
+
   let markers: { [id: string]: L.Marker } = {};
   let isAdmin = false;
   let isRouteMode = false;
   let customRoutePoints: POI[] = [];
   let routePolyline: L.Polyline | null = null;
+  let routeOutlinePolyline: L.Polyline | null = null;
 
   const routeOverlay = document.getElementById('route-overlay') as HTMLElement;
   const routeTotalDist = document.getElementById('route-total-distance') as HTMLElement;
   const btnClearRoute = document.getElementById('btn-clear-route') as HTMLButtonElement;
+  const btnSaveRouteUI = document.getElementById('btn-save-route-ui') as HTMLButtonElement;
+  const btnListRoutes = document.getElementById('btn-list-routes') as HTMLButtonElement;
+  const btnShareRoute = document.getElementById('btn-share-route') as HTMLButtonElement;
+  const btnLocateMe = document.getElementById('btn-locate-me') as HTMLButtonElement;
+
+  // --- 2.0 Lógica de Geolocalización del Usuario ---
+  let userMarker: L.Marker | null = null;
+  let isFirstLocation = true;
+  let prevLat = 0;
+  let prevLng = 0;
+  let currentDirection = 'abajo';
+
+  const updateUserLocation = (pos: GeolocationPosition, forceCenter = false) => {
+    const { latitude, longitude } = pos.coords;
+    const latlng = L.latLng(latitude, longitude);
+
+    if (prevLat !== 0 && prevLng !== 0) {
+      const dLat = latitude - prevLat;
+      const dLng = longitude - prevLng;
+      if (Math.abs(dLat) > 0.00001 || Math.abs(dLng) > 0.00001) {
+        if (Math.abs(dLat) > Math.abs(dLng)) {
+          currentDirection = dLat > 0 ? 'arriba' : 'abajo';
+        } else {
+          currentDirection = dLng > 0 ? 'derecha' : 'izquierda';
+        }
+      }
+    }
+    prevLat = latitude;
+    prevLng = longitude;
+
+    const iconHtml = `<img src="/assets/Animacion/belusin_camina_${currentDirection}.gif" style="width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));" />`;
+
+    if (!userMarker) {
+      const userIcon = L.divIcon({
+        className: 'user-location-marker-container',
+        html: iconHtml,
+        iconSize: [50, 50],
+        iconAnchor: [25, 25]
+      });
+      userMarker = L.marker(latlng, { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+    } else {
+      userMarker.setLatLng(latlng);
+      const currentIcon = userMarker.getIcon() as L.DivIcon;
+      if (currentIcon.options.html !== iconHtml) {
+        userMarker.setIcon(L.divIcon({
+          className: 'user-location-marker-container',
+          html: iconHtml,
+          iconSize: [50, 50],
+          iconAnchor: [25, 25]
+        }));
+      }
+    }
+
+    if (isFirstLocation || forceCenter) {
+      map.setView(latlng, 17, { animate: true });
+      isFirstLocation = false;
+    }
+  };
+
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(
+      updateUserLocation,
+      (err) => console.warn('Error GPS:', err.message),
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+    );
+  }
+
+  // --- Simulación de Movimiento para pruebas (Teclado) ---
+  let simLat = mapCenter[0];
+  let simLng = mapCenter[1];
+  window.addEventListener('keydown', (e) => {
+    const step = 0.00005; // Ajuste de velocidad
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      if (userMarker) {
+        simLat = userMarker.getLatLng().lat;
+        simLng = userMarker.getLatLng().lng;
+      }
+      if (e.key === 'ArrowUp') simLat += step;
+      if (e.key === 'ArrowDown') simLat -= step;
+      if (e.key === 'ArrowLeft') simLng -= step;
+      if (e.key === 'ArrowRight') simLng += step;
+      
+      const fakePos = {
+        coords: {
+          latitude: simLat,
+          longitude: simLng,
+          accuracy: 5,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null
+        },
+        timestamp: Date.now()
+      } as GeolocationPosition;
+      
+      updateUserLocation(fakePos, true);
+    }
+  });
+
+  btnLocateMe?.addEventListener('click', function() {
+    if (userMarker) {
+      map.setView(userMarker.getLatLng(), 17, { animate: true });
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => updateUserLocation(pos, true),
+        (err) => {
+          let msg = 'No se pudo obtener tu ubicación.';
+          if (err.code === 1) msg = 'Permiso denegado. Activa el GPS o los permisos en la configuración de tu navegador/móvil.';
+          else if (err.code === 2) msg = 'Ubicación no disponible en este dispositivo.';
+          else if (err.code === 3) msg = 'Tiempo de espera agotado al buscar el GPS.';
+          alert(msg);
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: Infinity }
+      );
+    }
+  });
+
 
   // --- 2.1 Gestión de Diseño Draggable ---
   const LAYOUT_KEY = 'beluso_ui_layout_v1';
@@ -391,11 +292,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const widget = document.getElementById('weather-widget');
   const layers = document.getElementById('map-layers-container');
-  const header = document.getElementById('app-header');
+  // Header variable removed because it was unused
 
   if (widget) makeDraggable(widget);
   if (layers) makeDraggable(layers);
-  if (header) makeDraggable(header);
 
   loadLayout();
 
@@ -404,9 +304,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data) {
       let stored: POI[] = JSON.parse(data);
 
-      // CORRECCIÓN DE DEPRECACIÓN: Eliminar puntos nudistas antiguos si existen en el almacenamiento
-      // para que no se vuelvan a importar como puntos "personalizados"
-      stored = stored.filter(p => !p.id.includes('pedron') && !p.id.includes('sartaxens'));
+      // CORRECCIÓN DE DEPRECACIÓN: Eliminar puntos antiguos o de prueba (ej: Praia do Pozo)
+      stored = stored.filter(p => 
+        !p.id.includes('pedron') && 
+        !p.id.includes('sartaxens') && 
+        !p.name.includes('Pozo') &&
+        p.description && p.description.length > 10
+      );
 
       // Usar la versión guardada de los puntos por defecto si existe
       pois = DEFAULT_POIS.map(def => {
@@ -428,12 +332,13 @@ document.addEventListener('DOMContentLoaded', () => {
     markers = {};
 
     pois.forEach(poi => {
+      // Filtering by category removed; show all POIs
       const emoji = CATEGORY_EMOJIS[poi.category] || CATEGORY_EMOJIS['generico'];
       const icon = L.divIcon({
         className: `emoji-marker ${poi.category}`,
         html: `<span>${emoji}</span>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40]
+        iconSize: [44, 44],
+        iconAnchor: [22, 50]
       });
 
       const marker = L.marker([poi.lat, poi.lng], {
@@ -451,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         poi.lng = newPos.lng;
         const latInput = document.getElementById('poi-lat') as HTMLInputElement;
         const lngInput = document.getElementById('poi-lng') as HTMLInputElement;
-        if (latInput && lngInput && !adminModal.classList.contains('hidden')) {
+        if (latInput && lngInput) {
           latInput.value = newPos.lat.toString();
           lngInput.value = newPos.lng.toString();
         }
@@ -474,9 +379,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const carouselNext = document.getElementById('carousel-next') as HTMLButtonElement;
   const carouselCounter = document.getElementById('carousel-counter') as HTMLElement;
   const poiDistance = document.getElementById('poi-distance') as HTMLElement;
+  const btnGoogleMaps = document.getElementById('btn-google-maps') as HTMLButtonElement;
+
+  const btnToggleFavorite = document.getElementById('btn-toggle-favorite') as HTMLButtonElement;
+  const btnCloseBottomSheet = document.getElementById('btn-close-bottom-sheet') as HTMLButtonElement;
 
   const closeBottomSheet = () => {
     bottomSheet.classList.remove('open');
+  };
+
+  btnCloseBottomSheet?.addEventListener('click', closeBottomSheet);
+
+  const updateFavoriteButton = (poiId: string) => {
+    if (!btnToggleFavorite) return;
+    const isFav = favorites.includes(poiId);
+    btnToggleFavorite.innerText = isFav ? '❤️' : '🤍';
+    btnToggleFavorite.style.background = isFav ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0,0,0,0.05)';
+  };
+
+  const toggleFavorite = (poiId: string) => {
+    if (favorites.includes(poiId)) {
+      favorites = favorites.filter(id => id !== poiId);
+    } else {
+      favorites.push(poiId);
+    }
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    updateFavoriteButton(poiId);
   };
 
   const openBottomSheet = (poi: POI) => {
@@ -507,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       poiImg.style.display = 'none';
       if (poiCarousel) {
         poiCarousel.style.display = 'flex';
-        poiCarousel.innerHTML = poi.imgUrls.map(url => `<img src="${url}" style="min-width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;" />`).join('');
+        poiCarousel.innerHTML = poi.imgUrls.map(url => `<img src="${encodeURI(url)}" style="min-width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;" />`).join('');
 
         if (poi.imgUrls.length > 1) {
           if (carouselPrev) carouselPrev.style.display = 'flex';
@@ -540,14 +468,29 @@ document.addEventListener('DOMContentLoaded', () => {
       poiImg.src = poi.imgUrl || 'https://images.unsplash.com/photo-1500835556837-99ac94a94552?auto=format&fit=crop&w=300&q=80';
     }
 
+    updateFavoriteButton(poi.id);
+    btnToggleFavorite.onclick = (e) => {
+      e.stopPropagation();
+      toggleFavorite(poi.id);
+    };
+
+    if (btnGoogleMaps) {
+      btnGoogleMaps.onclick = (e) => {
+        e.stopPropagation();
+        window.open(`https://www.google.com/maps/search/?api=1&query=${poi.lat},${poi.lng}`, '_blank');
+      };
+    }
+
     if (isAdmin) {
       btnAction.innerText = 'Editar Punto';
+      btnAction.style.display = 'block';
       btnAction.onclick = () => {
         closeBottomSheet();
-        openAdminModal(poi.lat, poi.lng, poi);
+        openAdminModal(poi);
       };
     } else {
       btnAction.innerText = 'Centrar en el Mapa';
+      btnAction.style.display = 'block';
       btnAction.onclick = () => {
         map.setView([poi.lat, poi.lng], 16, { animate: true });
         closeBottomSheet();
@@ -557,19 +500,19 @@ document.addEventListener('DOMContentLoaded', () => {
     bottomSheet.classList.add('open');
     map.setView([poi.lat, poi.lng], map.getZoom() > 13 ? map.getZoom() : 14);
 
-    // Calcular y mostrar distancia desde Villa Jenny
-    const villaJenny = pois.find(p => p.id === 'poi-main-villa-jenny');
-    if (villaJenny && poi.id !== villaJenny.id) {
-      const dist = getDistance(villaJenny.lat, villaJenny.lng, poi.lat, poi.lng);
+    // Calcular y mostrar distancia desde A Meudiña
+  const meudina = pois.find(p => p.id === 'poi-amiudiña');
+    if (meudina && poi.id !== meudina.id) {
+      const dist = getDistance(meudina.lat, meudina.lng, poi.lat, poi.lng);
       if (poiDistance) {
-        poiDistance.innerText = `A ${dist.toFixed(2)} km de Villa Jenny`;
+        poiDistance.innerText = `A ${dist.toFixed(2)} km de A Meudiña`;
         poiDistance.style.display = 'block';
       }
     } else {
       if (poiDistance) poiDistance.style.display = 'none';
     }
 
-    if (isRouteMode && poi.id !== 'poi-main-villa-jenny') {
+    if (isRouteMode && poi.id !== 'poi-amiudiña') {
       btnAction.innerText = customRoutePoints.find(p => p.id === poi.id) ? 'Quitar de la Ruta' : 'Añadir a mi Ruta';
       btnAction.onclick = () => {
         togglePointInRoute(poi);
@@ -578,23 +521,94 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const adminModal = document.getElementById('admin-modal') as HTMLElement;
+  const btnDeletePoi = document.getElementById('btn-delete-poi') as HTMLButtonElement;
+  const btnCancelModal = document.getElementById('btn-cancel-modal') as HTMLButtonElement;
+
+  const openAdminModal = (poi: POI) => {
+    (document.getElementById('poi-id') as HTMLInputElement).value = poi.id || '';
+    (document.getElementById('poi-lat') as HTMLInputElement).value = poi.lat.toString();
+    (document.getElementById('poi-lng') as HTMLInputElement).value = poi.lng.toString();
+    (document.getElementById('poi-input-name') as HTMLInputElement).value = poi.name || '';
+    (document.getElementById('poi-input-desc') as HTMLTextAreaElement).value = poi.description || '';
+    (document.getElementById('poi-input-cat') as HTMLSelectElement).value = poi.category || 'generico';
+    (document.getElementById('poi-input-img') as HTMLInputElement).value = poi.imgUrl || '';
+    (document.getElementById('poi-input-vid') as HTMLInputElement).value = poi.vidUrl || '';
+
+    if (poi.id) {
+      btnDeletePoi.style.display = 'block';
+    } else {
+      btnDeletePoi.style.display = 'none';
+    }
+
+    adminModal.classList.remove('hidden');
+  };
+
+  btnCancelModal?.addEventListener('click', () => {
+    adminModal.classList.add('hidden');
+  });
+
+  btnDeletePoi?.addEventListener('click', () => {
+    const id = (document.getElementById('poi-id') as HTMLInputElement).value;
+    if (id && confirm('¿Seguro que quieres eliminar este punto?')) {
+      pois = pois.filter(p => p.id !== id);
+      savePOIs();
+      renderMarkers();
+      adminModal.classList.add('hidden');
+      closeBottomSheet();
+    }
+  });
+
+  const poiForm = document.getElementById('poi-form') as HTMLFormElement;
+  poiForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = (document.getElementById('poi-id') as HTMLInputElement).value;
+    const lat = parseFloat((document.getElementById('poi-lat') as HTMLInputElement).value);
+    const lng = parseFloat((document.getElementById('poi-lng') as HTMLInputElement).value);
+    const name = (document.getElementById('poi-input-name') as HTMLInputElement).value;
+    const description = (document.getElementById('poi-input-desc') as HTMLTextAreaElement).value;
+    const category = (document.getElementById('poi-input-cat') as HTMLSelectElement).value as POICategory;
+    const imgUrl = (document.getElementById('poi-input-img') as HTMLInputElement).value;
+    const vidUrl = (document.getElementById('poi-input-vid') as HTMLInputElement).value;
+
+    if (id) {
+      const idx = pois.findIndex(p => p.id === id);
+      if (idx > -1) {
+        pois[idx] = { ...pois[idx], lat, lng, name, description, category, imgUrl, vidUrl };
+      }
+    } else {
+      const newPoi: POI = {
+        id: 'custom-' + Date.now(),
+        lat, lng, name, description, category, imgUrl, vidUrl
+      };
+      pois.push(newPoi);
+    }
+
+    savePOIs();
+    renderMarkers();
+    adminModal.classList.add('hidden');
+  });
+
   const navExplorar = document.getElementById('nav-explorar') as HTMLElement;
   const navEventos = document.getElementById('nav-eventos') as HTMLElement;
-  const navRutas = document.getElementById('nav-rutas') as HTMLElement;
+  const navFavoritos = document.getElementById('nav-favoritos') as HTMLElement;
   const navMareas = document.getElementById('nav-mareas') as HTMLElement;
   const navMiRuta = document.getElementById('nav-mi-ruta') as HTMLElement;
-  const adminToggle = document.getElementById('admin-toggle') as HTMLElement;
 
   const setActiveNav = (elem: HTMLElement) => {
-    [navExplorar, navEventos, navRutas, navMareas, navMiRuta, adminToggle].forEach(e => e?.classList.remove('active'));
+    [navExplorar, navEventos, navFavoritos, navMareas, navMiRuta].forEach(e => e?.classList.remove('active'));
     elem?.classList.add('active');
+
+    if (elem !== navMiRuta && isRouteMode) {
+      isRouteMode = false;
+      if (routeOverlay) routeOverlay.classList.add('hidden');
+      updateRoutePolyline();
+    }
   };
 
   navExplorar.addEventListener('click', (e) => {
     e.preventDefault();
     setActiveNav(navExplorar);
-    isAdmin = false;
-    toggleAdminUI();
   });
 
   navEventos?.addEventListener('click', (e) => {
@@ -603,27 +617,14 @@ document.addEventListener('DOMContentLoaded', () => {
     openEventsModal();
   });
 
-  navRutas.addEventListener('click', (e) => {
+  navFavoritos.addEventListener('click', (e) => {
     e.preventDefault();
-    setActiveNav(navRutas);
-    isAdmin = false;
-    toggleAdminUI();
-    map.setView(mapCenter, 14, { animate: true });
+    setActiveNav(navFavoritos);
+    openPlanesModal();
   });
 
-  adminToggle.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (isAdmin) {
-      isAdmin = false;
-      document.body.classList.remove('admin-mode');
-      setActiveNav(navExplorar);
-    } else {
-      isAdmin = true;
-      document.body.classList.add('admin-mode');
-      setActiveNav(adminToggle);
-    }
-    toggleAdminUI();
-  });
+  // Admin toggle removed: admin mode is permanently disabled
+
 
   navMareas?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -635,32 +636,291 @@ document.addEventListener('DOMContentLoaded', () => {
     tidesTabBtn?.dispatchEvent(new Event('click'));
   });
 
+
+  const btnCloseRoute = document.getElementById('btn-close-route') as HTMLButtonElement;
+  btnCloseRoute?.addEventListener('click', () => {
+    isRouteMode = false;
+    routeOverlay.classList.add('hidden');
+    setActiveNav(navExplorar);
+    updateRoutePolyline();
+  });
+
   navMiRuta?.addEventListener('click', (e) => {
     e.preventDefault();
-    isRouteMode = !isRouteMode;
-    if (isRouteMode) {
-      setActiveNav(navMiRuta);
-      isAdmin = false;
-      toggleAdminUI();
-      closeBottomSheet();
-      // Empezar ruta desde Villa Jenny si está vacía
-      if (customRoutePoints.length === 0) {
-        const villaJenny = pois.find(p => p.id === 'poi-main-villa-jenny');
-        if (villaJenny) customRoutePoints.push(villaJenny);
+    isRouteMode = true; // Siempre forzamos el modo ruta (el usuario puede salir con la X ahora)
+    setActiveNav(navMiRuta);
+    closeBottomSheet();
+    // Cargar ruta guardada o empezar desde A Meudiña si es nueva
+    if (customRoutePoints.length === 0) {
+      const savedRoute = localStorage.getItem(ROUTE_STORAGE_KEY);
+      if (savedRoute) {
+        try {
+          const savedIds: string[] = JSON.parse(savedRoute);
+          const loaded = savedIds.map(id => pois.find(p => p.id === id)).filter(Boolean) as POI[];
+          if (loaded.length > 0) customRoutePoints = loaded;
+        } catch (_) {}
       }
-    } else {
-      setActiveNav(navExplorar);
-      routeOverlay.classList.add('hidden');
+      if (customRoutePoints.length === 0) {
+        const meudina = pois.find(p => p.id === 'poi-amiudiña');
+        if (meudina) customRoutePoints.push(meudina);
+      }
     }
+    
+    // Mostramos la interfaz de ruta y luego SIEMPRE abrimos el menú modal de rutas
     updateRoutePolyline();
+    openRoutesListModal();
   });
 
   btnClearRoute?.addEventListener('click', () => {
     customRoutePoints = [];
-    const villaJenny = pois.find(p => p.id === 'poi-main-villa-jenny');
-    if (villaJenny) customRoutePoints.push(villaJenny);
+    const meudina = pois.find(p => p.id === 'poi-amiudiña');
+    if (meudina) customRoutePoints.push(meudina);
     updateRoutePolyline();
     closeBottomSheet();
+  });
+
+  btnSaveRouteUI?.addEventListener('click', () => {
+    if (customRoutePoints.length > 1) {
+      const name = prompt('Nombre para esta ruta:', `Ruta ${new Date().toLocaleDateString()}`);
+      if (name) {
+        savedRoutes.unshift({ name, pois: customRoutePoints.map(p => p.id) });
+        localStorage.setItem(MULTI_ROUTES_KEY, JSON.stringify(savedRoutes));
+        alert('Ruta guardada con éxito.');
+      }
+    }
+  });
+
+  btnListRoutes?.addEventListener('click', () => {
+    openRoutesListModal();
+  });
+
+  const routesListModal = document.getElementById('routes-list-modal') as HTMLElement;
+  const btnCloseRoutesList = document.getElementById('btn-close-routes-list') as HTMLElement;
+  const savedRoutesContainer = document.getElementById('saved-routes-container') as HTMLElement;
+
+  const openRoutesListModal = () => {
+    if (!savedRoutesContainer) return;
+    savedRoutesContainer.innerHTML = '';
+    
+    if (savedRoutes.length === 0) {
+      savedRoutesContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary); font-weight: 700; padding:20px;">No tienes rutas guardadas aún.</p>';
+    }
+
+    savedRoutes.forEach((route, index) => {
+      const card = document.createElement('div');
+      card.className = 'event-card'; 
+      card.style.marginBottom = '12px';
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span class="name" style="color:var(--text-primary); font-size:16px; font-weight:800; display:block;">${route.name}</span>
+            <span class="desc" style="font-size:12px; color:var(--text-secondary); font-weight:600;">${route.pois.length} paradas</span>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="load-btn" style="background:var(--primary); color:white; border:none; padding:10px 16px; border-radius:14px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.4); display:flex; align-items:center; gap:6px; transition:transform 0.2s;">
+              <span>📍</span> Cargar
+            </button>
+            <button class="delete-btn" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); padding:10px 14px; border-radius:14px; font-size:14px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center;">
+              🗑️
+            </button>
+          </div>
+        </div>
+      `;
+
+      card.querySelector('.load-btn')?.addEventListener('click', () => {
+        const loadedPois = route.pois.map(id => pois.find(p => p.id === id)).filter(Boolean) as POI[];
+        if (loadedPois.length > 0) {
+          customRoutePoints = loadedPois;
+          const routeCurrentName = document.getElementById('route-current-name');
+          if (routeCurrentName) routeCurrentName.innerText = route.name;
+          updateRoutePolyline();
+          routesListModal.classList.add('hidden');
+        }
+      });
+
+      card.querySelector('.delete-btn')?.addEventListener('click', () => {
+        if (confirm('¿Eliminar esta ruta?')) {
+          savedRoutes.splice(index, 1);
+          localStorage.setItem(MULTI_ROUTES_KEY, JSON.stringify(savedRoutes));
+          openRoutesListModal();
+        }
+      });
+
+      savedRoutesContainer.appendChild(card);
+    });
+
+    routesListModal.classList.remove('hidden');
+  };
+
+  btnCloseRoutesList?.addEventListener('click', () => routesListModal.classList.add('hidden'));
+
+  const planesModal = document.getElementById('planes-modal') as HTMLElement;
+  const btnClosePlanes = document.getElementById('btn-close-planes') as HTMLElement;
+  const favoritesListContainer = document.getElementById('favorites-list') as HTMLElement;
+  const rainyPlansContainer = document.getElementById('rainy-plans-list') as HTMLElement;
+
+  const openPlanesModal = () => {
+    renderFavorites();
+    renderRainyPlans();
+    planesModal.classList.remove('hidden');
+    
+    // Reset tabs to recommended by default
+    const firstTab = document.querySelector('.plane-tab-btn[data-plane-tab="recomendados"]') as HTMLElement;
+    firstTab?.click();
+
+    // Reset view to list
+    const detailView = document.getElementById('plan-detail-view');
+    if (rainyPlansContainer) rainyPlansContainer.classList.remove('hidden');
+    if (detailView) detailView.classList.add('hidden');
+  };
+
+  const renderFavorites = () => {
+    if (!favoritesListContainer) return;
+    favoritesListContainer.innerHTML = '';
+
+    const favPois = favorites.map(id => pois.find(p => p.id === id)).filter(Boolean) as POI[];
+
+    if (favPois.length === 0) {
+      favoritesListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary); font-weight: 700; padding:40px; opacity: 0.6;">No tienes favoritos guardados aún.</p>';
+      return;
+    }
+
+    favPois.forEach(poi => {
+      const card = document.createElement('div');
+      card.className = 'event-card';
+      card.style.marginBottom = '12px';
+      card.innerHTML = `
+        <div style="display:flex; gap:12px; align-items:center; padding: 12px;">
+          <img src="${poi.imgUrl || (poi.imgUrls ? poi.imgUrls[0] : 'https://images.unsplash.com/photo-1500835556837-99ac94a94552?auto=format&fit=crop&w=100&q=80')}" style="width:55px; height:55px; border-radius:12px; object-fit:cover;" />
+          <div style="flex:1;">
+            <span class="name" style="color:var(--text-primary); font-size:16px; font-weight:800; display:block;">${poi.name}</span>
+            <span class="desc" style="font-size:12px; color:var(--text-secondary); font-weight:600;">${poi.category}</span>
+          </div>
+          <button class="btn-clear view-btn" style="background:var(--primary); color:white; padding:8px 16px; font-size:12px; font-weight:800; border-radius:12px;">Ver</button>
+        </div>
+      `;
+
+      card.querySelector('.view-btn')?.addEventListener('click', () => {
+        map.setView([poi.lat, poi.lng], 16, { animate: true });
+        openBottomSheet(poi);
+        planesModal.classList.add('hidden');
+      });
+
+      favoritesListContainer.appendChild(card);
+    });
+  };
+
+  const renderRainyPlans = () => {
+    if (!rainyPlansContainer) return;
+    rainyPlansContainer.innerHTML = '';
+
+    RAINY_PLANS.forEach(plan => {
+      const card = document.createElement('div');
+      card.className = 'rainy-plan-card';
+      card.innerHTML = `
+        <div class="plan-header" style="margin-bottom: 0;">
+          <div class="plan-title">${plan.emoji} ${plan.title}</div>
+          <div class="plan-duration">${plan.duration}</div>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        showPlanDetail(plan);
+      });
+      
+      rainyPlansContainer.appendChild(card);
+    });
+  };
+
+  const showPlanDetail = (plan: typeof RAINY_PLANS[0]) => {
+    const detailView = document.getElementById('plan-detail-view');
+    const detailContent = document.getElementById('plan-detail-content');
+    const startBtn = document.getElementById('btn-start-plan');
+
+    if (!rainyPlansContainer || !detailView || !detailContent || !startBtn) return;
+
+    detailContent.innerHTML = `
+      <div class="plan-detail-header">
+        <div class="plan-detail-emoji">${plan.emoji}</div>
+        <div class="plan-detail-title-group">
+          <div class="plan-duration" style="margin-bottom: 5px; display: inline-block;">${plan.duration}</div>
+          <h2>${plan.title}</h2>
+        </div>
+      </div>
+      
+      <div class="plan-detail-summary">
+        <p>${plan.description}</p>
+      </div>
+
+      <div class="plan-detail-section-title">¿Qué esperar de este plan?</div>
+      <ul class="plan-detail-items">
+        ${plan.items.map(item => `<li><span>📍</span> ${item}</li>`).join('')}
+      </ul>
+
+      <div class="plan-detail-hint">
+        <span>✨</span>
+        <div>
+          <strong style="display:block; margin-bottom: 2px;">Consejo Belusín:</strong>
+          ${plan.hint}
+        </div>
+      </div>
+    `;
+
+    rainyPlansContainer.classList.add('hidden');
+    detailView.classList.remove('hidden');
+
+    startBtn.onclick = () => {
+      loadPlanAsRoute(plan);
+    };
+  };
+
+  const btnBackToPlans = document.getElementById('btn-back-to-plans');
+  btnBackToPlans?.addEventListener('click', () => {
+    const detailView = document.getElementById('plan-detail-view');
+    if (rainyPlansContainer) rainyPlansContainer.classList.remove('hidden');
+    if (detailView) detailView.classList.add('hidden');
+  });
+
+  // Lógica de pestañas para el modal de planes
+  const planeTabBtns = document.querySelectorAll('.plane-tab-btn');
+  const planeTabContents = document.querySelectorAll('.plane-tab-content');
+
+  planeTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = (btn as HTMLElement).dataset.planeTab;
+      planeTabBtns.forEach(b => b.classList.remove('active'));
+      planeTabContents.forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const targetContent = document.getElementById(`tab-${tab}`);
+      if (targetContent) targetContent.classList.add('active');
+    });
+  });
+
+  btnClosePlanes?.addEventListener('click', () => {
+    planesModal.classList.add('hidden');
+    setActiveNav(navExplorar);
+  });
+
+  btnShareRoute?.addEventListener('click', async () => {
+    if (customRoutePoints.length > 1) {
+      const routeNames = customRoutePoints.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+      const distText = routeTotalDist?.innerText || '';
+      const shareText = `🗺️ Mi Ruta en Beluso (${distText}):\n\n${routeNames}\n\n📱 AppBeluso - Tu guía de turismo`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Mi Ruta en Beluso', text: shareText });
+        } catch (_) {}
+      } else {
+        try {
+          await navigator.clipboard.writeText(shareText);
+          const originalText = btnShareRoute.innerText;
+          btnShareRoute.innerText = '✅ Copiado';
+          setTimeout(() => { btnShareRoute.innerText = originalText; }, 2000);
+        } catch (_) {
+          alert(shareText);
+        }
+      }
+    }
   });
 
   const togglePointInRoute = (poi: POI) => {
@@ -673,35 +933,86 @@ document.addEventListener('DOMContentLoaded', () => {
     updateRoutePolyline();
   };
 
-  const updateRoutePolyline = () => {
-    if (routePolyline) map.removeLayer(routePolyline);
+  const loadPlanAsRoute = (plan: typeof RAINY_PLANS[0]) => {
+    isRouteMode = true;
+    setActiveNav(navMiRuta);
+    
+    // Convertir routeCoords a formato POI
+    customRoutePoints = plan.routeCoords.map(coord => ({
+      id: `plan-point-${Date.now()}-${Math.random()}`,
+      lat: coord.lat,
+      lng: coord.lng,
+      name: coord.name,
+      description: plan.title,
+      category: 'generico'
+    }));
+
+    // Actualizar nombre de la ruta en la UI
+    const routeCurrentName = document.getElementById('route-current-name');
+    if (routeCurrentName) routeCurrentName.innerText = plan.title;
+
+    updateRoutePolyline();
+    planesModal.classList.add('hidden');
+    
+    // Centrar mapa en el primer punto
+    if (customRoutePoints.length > 0) {
+      map.setView([customRoutePoints[0].lat, customRoutePoints[0].lng], 13, { animate: true });
+    }
+  };
+
+  const updateRoutePolyline = async () => {
+    if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
+    if (routeOutlinePolyline) { map.removeLayer(routeOutlinePolyline); routeOutlinePolyline = null; }
 
     if (isRouteMode && customRoutePoints.length > 1) {
-      const latlngs = customRoutePoints.map(p => [p.lat, p.lng] as L.LatLngTuple);
-      routePolyline = L.polyline(latlngs, {
-        color: '#6366f1',
-        weight: 5,
-        opacity: 0.8,
-        dashArray: '10, 10',
-        lineJoin: 'round'
-      }).addTo(map);
+      try {
+        // Usar OSRM para rutas reales por caminos
+        const coords = customRoutePoints.map(p => `${p.lng},${p.lat}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-      // Añadir clase de animación si el explorador lo soporta (añadido en CSS)
-      const pathEl = (routePolyline as any)._path;
-      if (pathEl && pathEl.classList) {
-        pathEl.classList.add('route-line-animation');
-      }
+        if (!data.routes || data.routes.length === 0) throw new Error('Sin ruta');
 
-      const totalDist = customRoutePoints.reduce((acc, curr, i) => {
-        if (i === 0) return 0;
-        return acc + getDistance(customRoutePoints[i - 1].lat, customRoutePoints[i - 1].lng, curr.lat, curr.lng);
-      }, 0);
+        const totalDist = data.routes[0].distance / 1000;
+        const routeCoords = data.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
 
-      console.log(`Ruta personalizada: ${totalDist.toFixed(2)} km`);
+        // Contorno para mejor visibilidad
+        routeOutlinePolyline = L.polyline(routeCoords, {
+          color: '#FFFFFF',
+          weight: 12,
+          opacity: 0.7,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
 
-      if (routeOverlay && routeTotalDist) {
-        routeOverlay.classList.remove('hidden');
-        routeTotalDist.innerText = `${totalDist.toFixed(2)} km`;
+        // Ruta principal en naranja brillante muy visible
+        routePolyline = L.polyline(routeCoords, {
+          color: '#FF5722',
+          weight: 7,
+          opacity: 1,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+
+        if (routeOverlay && routeTotalDist) {
+          routeOverlay.classList.remove('hidden');
+          routeTotalDist.innerText = `${totalDist.toFixed(2)} km`;
+        }
+      } catch (err) {
+        console.warn('Fallo OSRM, usando línea recta:', err);
+        const latlngs = customRoutePoints.map(p => [p.lat, p.lng] as L.LatLngTuple);
+        routeOutlinePolyline = L.polyline(latlngs, { color: '#FFFFFF', weight: 11, opacity: 0.5 }).addTo(map);
+        routePolyline = L.polyline(latlngs, { color: '#FF5722', weight: 6, opacity: 0.95 }).addTo(map);
+
+        const totalDist = customRoutePoints.reduce((acc, curr, i) => {
+          if (i === 0) return 0;
+          return acc + getDistance(customRoutePoints[i - 1].lat, customRoutePoints[i - 1].lng, curr.lat, curr.lng);
+        }, 0);
+        if (routeOverlay && routeTotalDist) {
+          routeOverlay.classList.remove('hidden');
+          routeTotalDist.innerText = `${totalDist.toFixed(2)} km`;
+        }
       }
     } else {
       if (routeOverlay) routeOverlay.classList.add('hidden');
@@ -716,7 +1027,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const openEventsModal = () => {
     if (!eventsList) return;
     eventsList.innerHTML = '';
-    EVENTS_DATA.forEach(ev => {
+    
+    const now = new Date().getTime();
+    const upcomingEvents = EVENTS_DATA.filter(ev => {
+      // Filtrar eventos que no tengan fecha o cuya fecha (timestamp) sea mayor o igual que hoy
+      return !ev.timestamp || ev.timestamp >= now;
+    });
+
+    if (upcomingEvents.length === 0) {
+      eventsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary); font-weight: 700; padding:20px;">No hay próximos eventos programados.</p>';
+    }
+
+    upcomingEvents.forEach(ev => {
       const card = document.createElement('div');
       card.className = 'event-card';
       card.innerHTML = `
@@ -740,94 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setActiveNav(navExplorar);
   });
 
-  // --- 4. Lógica del Modo Administrador ---
-  const adminControls = document.getElementById('admin-controls') as HTMLElement;
-  const adminModal = document.getElementById('admin-modal') as HTMLElement;
-  const poiForm = document.getElementById('poi-form') as HTMLFormElement;
-
-  const toggleAdminUI = () => {
-    adminControls.classList.toggle('admin-hidden', !isAdmin);
-    closeBottomSheet();
-    renderMarkers();
-  };
-
-  map.on('click', (e: L.LeafletMouseEvent) => {
-    if (isAdmin) {
-      openAdminModal(e.latlng.lat, e.latlng.lng);
-    }
-  });
-
-  const openAdminModal = (lat: number, lng: number, existingPoi?: POI) => {
-    const idInput = document.getElementById('poi-id') as HTMLInputElement;
-    const latInput = document.getElementById('poi-lat') as HTMLInputElement;
-    const lngInput = document.getElementById('poi-lng') as HTMLInputElement;
-    const nameInput = document.getElementById('poi-input-name') as HTMLInputElement;
-    const catInput = document.getElementById('poi-input-cat') as HTMLSelectElement;
-    const descInput = document.getElementById('poi-input-desc') as HTMLTextAreaElement;
-    const imgInput = document.getElementById('poi-input-img') as HTMLInputElement;
-    const vidInput = document.getElementById('poi-input-vid') as HTMLInputElement;
-    const btnDelete = document.getElementById('btn-delete-poi') as HTMLButtonElement;
-
-    if (existingPoi) {
-      idInput.value = existingPoi.id;
-      nameInput.value = existingPoi.name;
-      catInput.value = existingPoi.category;
-      descInput.value = existingPoi.description;
-      imgInput.value = existingPoi.imgUrl || '';
-      vidInput.value = existingPoi.vidUrl || '';
-      btnDelete.style.display = 'block';
-    } else {
-      poiForm.reset();
-      idInput.value = '';
-      catInput.value = 'generico';
-      btnDelete.style.display = 'none';
-    }
-
-    latInput.value = lat.toString();
-    lngInput.value = lng.toString();
-    adminModal.classList.remove('hidden');
-  };
-
-  document.getElementById('btn-cancel-modal')?.addEventListener('click', () => {
-    adminModal.classList.add('hidden');
-  });
-
-  poiForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const idVal = (document.getElementById('poi-id') as HTMLInputElement).value;
-    const newPoi: POI = {
-      id: idVal || 'poi-' + Date.now(),
-      lat: parseFloat((document.getElementById('poi-lat') as HTMLInputElement).value),
-      lng: parseFloat((document.getElementById('poi-lng') as HTMLInputElement).value),
-      name: (document.getElementById('poi-input-name') as HTMLInputElement).value,
-      category: (document.getElementById('poi-input-cat') as HTMLSelectElement).value as POICategory,
-      description: (document.getElementById('poi-input-desc') as HTMLTextAreaElement).value,
-      imgUrl: (document.getElementById('poi-input-img') as HTMLInputElement).value,
-      vidUrl: (document.getElementById('poi-input-vid') as HTMLInputElement).value
-    };
-
-    if (idVal) {
-      const index = pois.findIndex(p => p.id === idVal);
-      if (index > -1) pois[index] = newPoi;
-    } else {
-      pois.push(newPoi);
-    }
-
-    savePOIs();
-    renderMarkers();
-    adminModal.classList.add('hidden');
-  });
-
-  document.getElementById('btn-delete-poi')?.addEventListener('click', () => {
-    const idVal = (document.getElementById('poi-id') as HTMLInputElement).value;
-    if (idVal) {
-      pois = pois.filter(p => p.id !== idVal);
-      savePOIs();
-      renderMarkers();
-      adminModal.classList.add('hidden');
-    }
-  });
-
+  // Admin controls removed: admin UI disabled
   // --- 5. API de Clima Real y Personaje Interactivo ---
   const weatherWidget = document.getElementById('weather-widget') as HTMLElement;
   const rainContainer = document.getElementById('rain') as HTMLElement;
@@ -838,15 +1073,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentWeather: WeatherState = 'rain'; // Estado base guiado por la API
   let weatherInterval: number | null = null;
   let extremeTimeout: number | null = null;
-
-  const createParticle = (type: 'rain' | 'vomit' | 'wind' | 'thunder' | 'heart' | 'sparkle') => {
+  const createParticle = (type: 'rain' | 'vomit' | 'wind' | 'thunder' | 'heart' | 'sparkle' | 'sun' | 'cloud') => {
     if (!rainContainer) return;
     const particle = document.createElement('div');
     const left = Math.random() * 50;
 
-    if (type === 'heart' || type === 'sparkle') {
-      particle.className = type === 'heart' ? 'heart-particle' : 'heart-particle sparkle';
-      particle.innerText = type === 'heart' ? '❤️' : '✨';
+    const floatingTypes = ['heart', 'sparkle', 'sun', 'cloud'];
+    if (floatingTypes.includes(type)) {
+      particle.className = `heart-particle ${type}`;
+      let emoji = '❤️';
+      if (type === 'sparkle') emoji = '✨';
+      else if (type === 'sun') emoji = '☀️';
+      else if (type === 'cloud') emoji = '☁️';
+      
+      particle.innerText = emoji;
       particle.style.left = `${left}px`;
       rainContainer.appendChild(particle);
       setTimeout(() => particle.remove(), 1000);
@@ -890,13 +1130,15 @@ document.addEventListener('DOMContentLoaded', () => {
     weatherWidget.classList.remove('sunny', 'cloudy', 'rain', 'thunder', 'extreme');
     weatherWidget.classList.add(state);
 
-    const sunRays = document.getElementById('sun-rays');
-    if (sunRays) sunRays.style.display = (state === 'sunny') ? 'block' : 'none';
-
-    // Actualizar fondo animado
+    // Actualizar fondo animado - REMOVED per user request
     document.querySelectorAll('.weather-bg-state').forEach(el => el.classList.remove('active'));
-    const bgElement = document.getElementById(`bg-${state === 'thunder' ? 'rain' : state}`);
-    if (bgElement) bgElement.classList.add('active');
+
+    // Actualizar tema global (para variables de contraste)
+    const appContainer = document.getElementById('app');
+    if (appContainer) {
+      appContainer.classList.remove('bg-sunny', 'bg-cloudy', 'bg-rain');
+      appContainer.classList.add(`bg-${state === 'thunder' ? 'rain' : state}`);
+    }
 
     // Actualizar fondo del widget de clima
     if (weatherWidget) {
@@ -914,21 +1156,6 @@ document.addEventListener('DOMContentLoaded', () => {
     startNormalWeather();
   };
 
-  const updateBathingStatus = (windSpeedKmH: number, state: WeatherState) => {
-    const flag = document.getElementById('bathing-flag');
-    if (!flag) return;
-
-    flag.classList.remove('green', 'yellow', 'red', 'bicolor');
-
-    if (state === 'thunder' || windSpeedKmH > 35) {
-      flag.classList.add('red');
-    } else if (state === 'rain' || windSpeedKmH > 20) {
-      flag.classList.add('yellow');
-    } else {
-      // El estándar para áreas seguras supervisadas suele ser bicolor rojo/amarillo
-      flag.classList.add('bicolor');
-    }
-  };
 
   let weatherFetchInterval: number | null = null;
   const fetchRealWeather = async () => {
@@ -968,8 +1195,6 @@ document.addEventListener('DOMContentLoaded', () => {
         navInfo.innerText = `${Math.round(temp)}°C | ${desc}`;
       } */
 
-      const windSpeed = current.data.instant.details.wind_speed * 3.6;
-      updateBathingStatus(windSpeed, state);
 
       const mTemp = document.getElementById('modal-temp');
       const mDesc = document.getElementById('modal-desc');
@@ -1020,27 +1245,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const dailyList = document.getElementById('daily-list');
       if (dailyList) {
-        let dHtml = '';
-        const dailyIndices = [24, 48, 72, 96];
-        dailyIndices.forEach(idx => {
-          const dEntry = data.properties.timeseries[idx];
-          if (dEntry) {
-            const dDate = new Date(dEntry.time);
-            const dTemp = Math.round(dEntry.data.instant.details.air_temperature);
-            const dSym = dEntry.data.next_6_hours?.summary.symbol_code || "fair_day";
-            const dayName = dDate.toLocaleDateString('es-ES', { weekday: 'short' });
-            let dIcon = '☀️';
-            if (dSym.includes('rain')) dIcon = '🌧️';
-            else if (dSym.includes('cloud')) dIcon = '🌥️';
-
-            dHtml += `
-              <div class="daily-item">
-                <span class="day">${dayName}</span>
-                <span style="font-size:24px;">${dIcon}</span>
-                <span class="temp">${dTemp}°</span>
-              </div>
-            `;
+        // Build a map of date -> first timeseries entry for that day, to avoid skipping days
+        const ts = data.properties.timeseries || [];
+        const byDate: { [key: string]: any } = {};
+        ts.forEach((entry: any) => {
+          const d = new Date(entry.time);
+          const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
+          if (!byDate[key]) {
+            byDate[key] = entry;
           }
+        });
+        // Collect and sort by date ascending
+        const days = Object.keys(byDate).sort().slice(0, 5);
+        let dHtml = '';
+        days.forEach((dateKey) => {
+          const entry = byDate[dateKey];
+          if (!entry) return;
+          const dDate = new Date(entry.time);
+          const dTemp = Math.round(entry.data.instant.details.air_temperature);
+          const dSym = entry.data.next_6_hours?.summary.symbol_code || "fair_day";
+          const dayName = dDate.toLocaleDateString('es-ES', { weekday: 'short' });
+          let dIcon = '☀️';
+          if (dSym.includes('rain')) dIcon = '🌧️';
+          else if (dSym.includes('cloud')) dIcon = '🌥️';
+          dHtml += `
+            <div class="daily-item">
+              <span class="day">${dayName}</span>
+              <span style="font-size:24px;">${dIcon}</span>
+              <span class="temp">${dTemp}°</span>
+            </div>
+          `;
         });
         dailyList.innerHTML = dHtml;
       }
@@ -1108,35 +1342,52 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   closeOnBackdrop(weatherDetailsModal, closeWeatherModal);
-  closeOnBackdrop(adminModal, () => adminModal.classList.add('hidden'));
   closeOnBackdrop(eventsModal, () => eventsModal.classList.add('hidden'));
+  closeOnBackdrop(routesListModal, () => routesListModal.classList.add('hidden'));
+  closeOnBackdrop(planesModal, () => planesModal.classList.add('hidden'));
 
+  let isFunnyState = false;
   const triggerFunnyState = () => {
-    if (weatherWidget.classList.contains('extreme')) return;
+    if (weatherWidget.classList.contains('extreme') || isFunnyState) return;
     
+    isFunnyState = true;
     weatherWidget.classList.add('funny');
-    // Generar algunas partículas de alegría
-    for(let i=0; i<5; i++) {
-      setTimeout(() => createParticle(Math.random() > 0.5 ? 'heart' : 'sparkle'), i * 100);
-    }
     
+    // Partículas dinámicas según el clima actual
+    let type: 'sun' | 'cloud' | 'heart' | 'sparkle' = 'heart';
+    if (currentWeather === 'sunny') type = 'heart';
+    else if (currentWeather === 'cloudy') type = 'cloud';
+    else if (currentWeather === 'rain' || currentWeather === 'thunder') type = 'sparkle';
+
+    for(let i=0; i<6; i++) {
+      setTimeout(() => createParticle(type), i * 150);
+    }
+
     setTimeout(() => {
       weatherWidget.classList.remove('funny');
-    }, 3000);
+      isFunnyState = false;
+    }, 2500);
   };
 
+  // Prevenir dobles clics o eventos al tocar en móviles (touchend + click)
   weatherWidget.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    triggerFunnyState();
-    // openWeatherModal eliminado por petición del usuario
-  });
+    
+    // Disparar gestos visuales en el personaje
+    const charEl = document.getElementById('weather-char');
+    if (charEl) {
+      const gestures = ['gesture-jump', 'gesture-shake', 'gesture-arm-up'];
+      const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+      
+      charEl.classList.remove(...gestures);
+      void (charEl as any).offsetWidth; // Force reflow
+      charEl.classList.add(randomGesture);
+      
+      setTimeout(() => charEl.classList.remove(randomGesture), 1000);
+    }
 
-  weatherWidget.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
     triggerFunnyState();
-    // openWeatherModal eliminado por petición del usuario
   });
 
   // Lógica de cambio de pestañas
@@ -1153,9 +1404,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Cerrar bottom sheet al tocar en el mapa
-  map.on('click', () => {
-    if (!isAdmin) closeBottomSheet();
+  // Cerrar bottom sheet al tocar en el mapa o añadir punto si es admin
+  map.on('click', (e) => {
+    if (isAdmin) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      openAdminModal({
+        id: '',
+        lat,
+        lng,
+        name: '',
+        description: '',
+        category: 'generico'
+      });
+    } else {
+      closeBottomSheet();
+    }
   });
 
   const populateRealTides = async () => {
@@ -1249,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const vLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
             vLine.setAttribute("x1", x.toString()); vLine.setAttribute("y1", "48");
             vLine.setAttribute("x2", x.toString()); vLine.setAttribute("y2", "50");
-            vLine.setAttribute("stroke", "#e2e8f0"); vLine.setAttribute("stroke-width", "0.3");
+            vLine.setAttribute("stroke", "var(--glass-border)"); vLine.setAttribute("stroke-width", "0.3");
             labelLayer.appendChild(vLine);
           }
         });
@@ -1274,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', () => {
             text.setAttribute("y", (pt.y - (p.isHigh ? 4 : -7)).toString());
             text.setAttribute("text-anchor", "middle");
             text.setAttribute("font-size", "3");
-            text.setAttribute("fill", p.isHigh ? "#1e40af" : "#92400e");
+            text.setAttribute("fill", "var(--text-primary)");
             text.textContent = `${p.val.toFixed(2)}m`;
             labelLayer.appendChild(text);
           }
@@ -1294,12 +1558,24 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error("Mareas Error Final:", e);
       tidesList.innerHTML = `
         <div style="grid-column: 1/-1; text-align:center; padding: 20px;">
-          <p style="font-size:12px; color:#ef4444; margin-bottom:10px;">No se pudo conectar con el servicio de mareas.</p>
-          <button onclick="window.location.reload()" style="background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:20px; font-size:11px;">Reintentar</button>
+          <p style="font-size:12px; color:var(--danger); margin-bottom:10px;">No se pudo conectar con el servicio de mareas.</p>
+          <button onclick="window.location.reload()" class="btn-primary" style="padding:8px 16px; border-radius:20px; font-size:11px;">Reintentar</button>
         </div>
       `;
     }
   };
+  const btnAdminToggle = document.getElementById('btn-admin-toggle');
+  btnAdminToggle?.addEventListener('click', () => {
+    isAdmin = !isAdmin;
+    document.body.classList.toggle('admin-mode', isAdmin);
+    btnAdminToggle.classList.toggle('active', isAdmin);
+    renderMarkers();
+    
+    // Notificación visual rápida
+    const msg = isAdmin ? 'Modo Administrador ACTIVADO. Ahora puedes arrastrar los puntos.' : 'Modo Administrador DESACTIVADO.';
+    console.log(msg);
+  });
+
   loadPOIs();
   renderMarkers();
   fetchRealWeather();

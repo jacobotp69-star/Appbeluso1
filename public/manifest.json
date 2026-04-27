@@ -9,14 +9,46 @@
   "description": "Aplicación de turismo de Beluso y Bueu",
   "icons": [
     {
-      "src": "/vite.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "48x48",
+      "purpose": "any maskable"
     },
     {
-      "src": "/vite.svg",
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "128x128",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "256x256",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "purpose": "any maskable"
     }
   ]
 }

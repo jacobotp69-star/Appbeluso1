@@ -1,0 +1,2 @@
+/* Centralized styles entry (shim) to keep existing styles in sync */
+@import '../style.css';

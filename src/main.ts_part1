@@ -1,0 +1,173 @@
+import './style.css';
+import L from 'leaflet';
+import { DEFAULT_POIS } from './data/pois';
+import type { POI, POICategory } from './models/poi';
+import { EVENTS_DATA } from './data/events';
+import { CATEGORY_EMOJIS } from './data/categories';
+import { RAINY_PLANS } from './data/rainy_plans';
+
+// EVENTS moved to data/events.ts; imported as EVENTS_DATA
+
+const calculateTidesForDate = (date: Date) => {
+  // Referencia: Una marea alta en Bueu (aprox) el 01-04-2024 a las 03:00
+  const epoch = new Date('2024-04-01T03:00:00').getTime();
+  const current = date.getTime();
+  const diffHours = (current - epoch) / (1000 * 60 * 60);
+
+  // El periodo de marea alta es de ~12.42 horas
+  const tideCycle = 12.42;
+  const cyclesSinceEpoch = diffHours / tideCycle;
+  const cycleFraction = cyclesSinceEpoch - Math.floor(cyclesSinceEpoch);
+
+  // Calcular la próxima marea alta desde ahora
+  const hoursToNextHigh = (1 - cycleFraction) * tideCycle;
+  const nextHigh = new Date(current + hoursToNextHigh * 60 * 60 * 1000);
+  const nextLow = new Date(nextHigh.getTime() - (tideCycle / 2) * 60 * 60 * 1000);
+
+  return {
+    high: nextHigh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    low: nextLow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+};
+
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// CATEGORY_EMOJIS now defined in data/categories.ts and imported as CATEGORY_EMOJIS
+
+// DEFAULT_POIS now imported from src/data/pois.ts
+document.addEventListener('DOMContentLoaded', () => {
+  // --- 1. Inicialización del Mapa ---
+  const mapCenter: L.LatLngTuple = [DEFAULT_POIS[0].lat, DEFAULT_POIS[0].lng];
+  const map = L.map('map', {
+    zoomControl: false,
+    attributionControl: false
+  }).setView(mapCenter, 14);
+
+  const satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: ''
+  });
+  const roadmapLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=es&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: ''
+  });
+  const trafficLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: ''
+  });
+
+  satelliteLayer.addTo(map);
+
+  const baseMaps = {
+    "Satélite": satelliteLayer,
+    "Mapa": roadmapLayer
+  };
+
+  const overlayMaps = {
+    "Tráfico": trafficLayer
+  };
+
+  const layersControl = L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(map);
+  const layersContainer = document.getElementById('map-layers-container');
+  if (layersContainer) {
+    layersContainer.appendChild(layersControl.getContainer()!);
+  }
+
+  // --- 2. Gestión de Estado y Datos ---
+  const STORAGE_KEY = 'beluso_pois_v2';
+  const ROUTE_STORAGE_KEY = 'beluso_saved_route_v1';
+  const MULTI_ROUTES_KEY = 'beluso_multi_routes_v2';
+  const FAVORITES_KEY = 'beluso_favorites_v1';
+
+  let pois: POI[] = [...DEFAULT_POIS];
+  let favorites: string[] = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+  let savedRoutes: { name: string, pois: string[] }[] = JSON.parse(localStorage.getItem(MULTI_ROUTES_KEY) || '[]');
+
+  let markers: { [id: string]: L.Marker } = {};
+  let isAdmin = false;
+  let isRouteMode = false;
+  let customRoutePoints: POI[] = [];
+  let routePolyline: L.Polyline | null = null;
+  let routeOutlinePolyline: L.Polyline | null = null;
+
+  const routeOverlay = document.getElementById('route-overlay') as HTMLElement;
+  const routeTotalDist = document.getElementById('route-total-distance') as HTMLElement;
+  const btnClearRoute = document.getElementById('btn-clear-route') as HTMLButtonElement;
+  const btnSaveRouteUI = document.getElementById('btn-save-route-ui') as HTMLButtonElement;
+  const btnListRoutes = document.getElementById('btn-list-routes') as HTMLButtonElement;
+  const btnShareRoute = document.getElementById('btn-share-route') as HTMLButtonElement;
+  const btnLocateMe = document.getElementById('btn-locate-me') as HTMLButtonElement;
+
+  // --- 2.0 Lógica de Geolocalización del Usuario ---
+  let userMarker: L.Marker | null = null;
+  let isFirstLocation = true;
+  let prevLat = 0;
+  let prevLng = 0;
+  let currentDirection = 'abajo';
+
+  const updateUserLocation = (pos: GeolocationPosition, forceCenter = false) => {
+    const { latitude, longitude, accuracy } = pos.coords;
+    const latlng = L.latLng(latitude, longitude);
+
+    if (prevLat !== 0 && prevLng !== 0) {
+      const dLat = latitude - prevLat;
+      const dLng = longitude - prevLng;
+      if (Math.abs(dLat) > 0.00001 || Math.abs(dLng) > 0.00001) {
+        if (Math.abs(dLat) > Math.abs(dLng)) {
+          currentDirection = dLat > 0 ? 'arriba' : 'abajo';
+        } else {
+          currentDirection = dLng > 0 ? 'derecha' : 'izquierda';
+        }
+      }
+    }
+    prevLat = latitude;
+    prevLng = longitude;
+
+    const iconHtml = `<img src="/assets/Animacion/belusin_camina_${currentDirection}.gif" style="width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));" />`;
+
+    if (!userMarker) {
+      const userIcon = L.divIcon({
+        className: 'user-location-marker-container',
+        html: iconHtml,
+        iconSize: [50, 50],
+        iconAnchor: [25, 45]
+      });
+      userMarker = L.marker(latlng, { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+    } else {
+      userMarker.setLatLng(latlng);
+      const currentIcon = userMarker.getIcon() as L.DivIcon;
+      if (currentIcon.options.html !== iconHtml) {
+        userMarker.setIcon(L.divIcon({
+          className: 'user-location-marker-container',
+          html: iconHtml,
+          iconSize: [50, 50],
+          iconAnchor: [25, 45]
+        }));
+      }
+    }
+
+    if (isFirstLocation || forceCenter) {
+      map.setView(latlng, 17, { animate: true });
+      isFirstLocation = false;
+    }
+  };
+
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(
+      updateUserLocation,
+      (err) => console.warn('Error GPS:', err.message),
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+    );
+  }
