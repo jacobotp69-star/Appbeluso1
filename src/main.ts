@@ -45,6 +45,7 @@ const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => 
 
 // DEFAULT_POIS now imported from src/data/pois.ts
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("DEFAULT_POIS loaded:", DEFAULT_POIS);
   // --- 0. Lógica de Pantalla de Inicio (Splash Screen) ---
   const splashScreen = document.getElementById('splash-screen');
   const splashVideo = document.getElementById('splash-video') as HTMLVideoElement;
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   if (splashVideo) {
+    console.log("Splash video element found:", splashVideo.src);
     splashVideo.volume = 1.0;
     splashVideo.addEventListener('ended', hideSplash);
     
@@ -78,8 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- 1. Inicialización del Mapa ---
-  const initialPoi = DEFAULT_POIS.find(p => p.id === 'poi-amiudiña') || DEFAULT_POIS[0];
-  const mapCenter: L.LatLngTuple = [initialPoi.lat, initialPoi.lng];
+  const initialPoi = DEFAULT_POIS.find(p => p.id === 'poi-amiudina') || DEFAULT_POIS[0];
+  const mapCenter: L.LatLngTuple = initialPoi ? [initialPoi.lat, initialPoi.lng] : [42.3333, -8.8]; // Fallback coordinates
   const map = L.map('map', {
     zoomControl: false,
     attributionControl: false
