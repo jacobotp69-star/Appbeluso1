@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
     map.setView([poi.lat, poi.lng], map.getZoom() > 13 ? map.getZoom() : 14);
 
     // Calcular y mostrar distancia desde A Miudiña
-  const miudina = pois.find(p => p.id === 'poi-amiudiña');
+  const miudina = pois.find(p => p.id === 'poi-amiudina');
     if (miudina && poi.id !== miudina.id) {
       const dist = getDistance(miudina.lat, miudina.lng, poi.lat, poi.lng);
       if (poiDistance) {
@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (poiDistance) poiDistance.style.display = 'none';
     }
 
-    if (isRouteMode && poi.id !== 'poi-amiudiña') {
+    if (isRouteMode && poi.id !== 'poi-amiudina') {
       btnAction.innerText = customRoutePoints.find(p => p.id === poi.id) ? 'Quitar de la Ruta' : 'Añadir a mi Ruta';
       btnAction.onclick = () => {
         togglePointInRoute(poi);
@@ -669,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (_) {}
       }
       if (customRoutePoints.length === 0) {
-        const miudina = pois.find(p => p.id === 'poi-amiudiña');
+        const miudina = pois.find(p => p.id === 'poi-amiudina');
         if (miudina) customRoutePoints.push(miudina);
       }
     }
@@ -681,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnClearRoute?.addEventListener('click', () => {
     customRoutePoints = [];
-    const miudina = pois.find(p => p.id === 'poi-amiudiña');
+    const miudina = pois.find(p => p.id === 'poi-amiudina');
     if (miudina) customRoutePoints.push(miudina);
     updateRoutePolyline();
     closeBottomSheet();
