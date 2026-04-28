@@ -30,13 +30,16 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100dvh;
   background: #000;
   z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
   transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
 }
 
@@ -47,9 +50,10 @@
 }
 
 #splash-video {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100dvh;
   object-fit: cover;
+  object-position: center;
 }
 
 #splash-skip {

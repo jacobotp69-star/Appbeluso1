@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const splashVideo = document.getElementById('splash-video') as HTMLVideoElement;
   const splashSkip = document.getElementById('splash-skip');
 
-  const hideSplash = () => {
+  let hideSplash = () => {
     if (splashScreen) {
       splashScreen.classList.add('hidden');
       if (splashVideo) splashVideo.pause();
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Forzar reproducción al cargar
     const attemptPlay = () => {
-      splashVideo.play().catch(e => {
+      splashVideo.play().catch(() => {
         console.log("Autoplay blocked, waiting for interaction...");
         // Si se bloquea, lo intentamos al primer clic en cualquier parte
         document.addEventListener('click', () => splashVideo.play(), { once: true });
