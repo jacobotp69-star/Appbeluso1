@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#5c6ac4" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>Turismo Beluso Bueu</title>
+    <title>A Miudiña</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;600;800&display=swap" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -23,21 +23,14 @@
 
     <!-- Contenedor Principal (Bloqueado a tamaño móvil) -->
     <div id="app">
-      <audio id="bg-music" autoplay loop src="/assets/Musica/App.mp3"></audio>
-      
-      <button id="btn-music-toggle" class="music-toggle-btn" title="Música de fondo">
-        <i class="fas fa-volume-high"></i>
-      </button>
+
 
 
 
 
       <div id="map"></div>
 
-      <!-- Botón Flotante Admin -->
-      <button id="btn-admin-toggle" class="admin-toggle-btn" title="Modo Administrador">
-        <span>⚙️</span>
-      </button>
+
 
       <!-- Contenedor de Capas del Mapa -->
 
@@ -177,57 +170,7 @@
         </div>
       </div>
 
-      <!-- Modal de Administración -->
-      <div id="admin-modal" class="modal hidden">
-        <div class="modal-content">
-          <h3>Gestión de Puntos</h3>
-          <form id="poi-form">
-            <input type="hidden" id="poi-id" />
-            
-            <div class="coordinates-section" style="background: rgba(15, 23, 42, 0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-              <span style="font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">📍 Ubicación Precisa</span>
-              <div style="display: flex; gap: 12px;">
-                <div style="flex: 1;">
-                  <label style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block;">Latitud</label>
-                  <input type="number" step="any" id="poi-lat" required style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 14px; font-weight: 600;" />
-                </div>
-                <div style="flex: 1;">
-                  <label style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block;">Longitud</label>
-                  <input type="number" step="any" id="poi-lng" required style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 14px; font-weight: 600;" />
-                </div>
-              </div>
-            </div>
-            
-            <label>Nombre del Lugar</label>
-            <input type="text" id="poi-input-name" required placeholder="Ej: Playa de Beluso" style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;" />
 
-            <label>Categoría</label>
-            <select id="poi-input-cat" required style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;">
-              <option value="playa">🏖️ Playa / Naturaleza</option>
-              <option value="restaurante">🍽️ Restaurante</option>
-              <option value="museo">🏛️ Patrimonio / Museo</option>
-              <option value="inicio">🏡 Alojamiento</option>
-              <option value="generico">📍 Otro</option>
-            </select>
-            
-            <label>Descripción</label>
-            <textarea id="poi-input-desc" required placeholder="Describe el lugar..." style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600; resize: none; height: 100px;"></textarea>
-            
-            <label>URL de Imagen (Opcional)</label>
-            <input type="url" id="poi-input-img" placeholder="https://..." style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;" />
-
-            <label>URL de Video MP4 (Opcional)</label>
-            <input type="url" id="poi-input-vid" placeholder="https://...mp4" style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; background: #fff; color: var(--text-primary); font-weight: 600;" />
-
-            <div class="modal-actions">
-              <button type="button" class="btn-danger" id="btn-delete-poi" style="display: none;">Eliminar</button>
-              <div style="flex-grow: 1;"></div>
-              <button type="button" class="btn-secondary" id="btn-cancel-modal">Cerrar</button>
-              <button type="submit" class="btn-primary">Guardar</button>
-            </div>
-          </form>
-        </div>
-      </div>
 
 
       <!-- Modal Avanzado de Clima y Mareas -->
@@ -338,6 +281,13 @@
           </div>
         </div>
       </div>
+
+      <!-- Fullscreen Image Modal -->
+      <div id="fullscreen-img-modal" class="modal hidden" style="background: rgba(0,0,0,0.9); z-index: 10000; display: flex; justify-content: center; align-items: center; padding: 0;">
+        <button id="btn-close-fullscreen" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 10001;">✕</button>
+        <img id="fullscreen-img" src="" style="max-width: 100vw; max-height: 100vh; object-fit: contain;" />
+      </div>
+
       <!-- BARRA DE NAVEGACIÓN INFERIOR -->
       <nav class="bottom-nav">
         <a href="#" class="nav-item active" id="nav-explorar">

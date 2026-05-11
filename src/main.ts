@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+// import { Capacitor } from '@capacitor/core';
 import './style.css';
 import L from 'leaflet';
 import { DEFAULT_POIS } from './data/pois';
@@ -59,14 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   if (splashVideo) {
-    // Intentar reproducción inmediata con sonido
     splashVideo.muted = false;
     splashVideo.volume = 1.0;
     
     const tryPlay = () => {
       splashVideo.play().catch(e => {
         console.warn("Autoplay bloqueado por el navegador:", e);
-        // Si falla, al menos lo dejamos en espera de un click como fallback
         document.addEventListener('click', () => {
           splashVideo.muted = false;
           splashVideo.play();
@@ -75,12 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     tryPlay();
-
-    // En APK nativa ya está configurado para permitirlo
-    if (Capacitor.isNativePlatform()) {
-      splashVideo.muted = false;
-      splashVideo.play().catch(() => {});
-    }
 
     splashVideo.addEventListener('ended', hideSplash);
   }
@@ -104,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Google Maps Hybrid (Satélite con etiquetas de calles y lugares)
   // lyrs=y: Híbrido, lyrs=s: Satélite puro, lyrs=m: Mapa normal
-  const satelliteLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+  L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
     maxZoom: 20,
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
   }).addTo(map);
@@ -126,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let savedRoutes: { name: string, pois: string[] }[] = JSON.parse(localStorage.getItem(MULTI_ROUTES_KEY) || '[]');
 
   let markers: { [id: string]: L.Marker } = {};
-  let isAdmin = false;
   let isRouteMode = false;
   let customRoutePoints: POI[] = [];
   let routePolyline: L.Polyline | null = null;
@@ -283,10 +274,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let startX: number, startY: number, initialX: number, initialY: number;
 
     const onStart = (e: MouseEvent | TouchEvent) => {
-      if (!isAdmin) return;
+      return; // Draggable UI disabled for users
       isDragging = true;
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const clientX = 'touches' in e ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
       
       startX = clientX;
       startY = clientY;
@@ -301,8 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const onMove = (e: MouseEvent | TouchEvent) => {
       if (!isDragging) return;
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const clientX = 'touches' in e ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
       
       const dx = clientX - startX;
       const dy = clientY - startY;
@@ -358,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const marker = L.marker([poi.lat, poi.lng], {
         icon,
-        draggable: isAdmin
+        draggable: false
       }).addTo(map);
 
       marker.on('click', () => {
@@ -397,6 +388,120 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGoogleMaps = document.getElementById('btn-google-maps') as HTMLButtonElement;
   const btnToggleFavorite = document.getElementById('btn-toggle-favorite') as HTMLButtonElement;
   const btnCloseBottomSheet = document.getElementById('btn-close-bottom-sheet') as HTMLButtonElement;
+  const fullscreenImgModal = document.getElementById('fullscreen-img-modal') as HTMLElement;
+  const fullscreenImg = document.getElementById('fullscreen-img') as HTMLImageElement;
+  const btnCloseFullscreen = document.getElementById('btn-close-fullscreen') as HTMLButtonElement;
+
+  let imgScale = 1;
+  let imgPanX = 0;
+  let imgPanY = 0;
+  let isImgPanning = false;
+  let imgStartX = 0;
+  let imgStartY = 0;
+  let initialPinchDistance = -1;
+  let initialScale = 1;
+
+  const updateImgTransform = () => {
+    if (fullscreenImg) {
+      fullscreenImg.style.transform = `translate(${imgPanX}px, ${imgPanY}px) scale(${imgScale})`;
+      fullscreenImg.style.transition = isImgPanning || initialPinchDistance > 0 ? 'none' : 'transform 0.2s ease-out';
+    }
+  };
+
+  if (btnCloseFullscreen) {
+    btnCloseFullscreen.addEventListener('click', () => {
+      if (fullscreenImgModal) fullscreenImgModal.classList.add('hidden');
+    });
+  }
+
+  const openFullscreenImg = (src: string) => {
+    if (!fullscreenImgModal || !fullscreenImg) return;
+    fullscreenImg.src = src;
+    imgScale = 1;
+    imgPanX = 0;
+    imgPanY = 0;
+    updateImgTransform();
+    fullscreenImgModal.classList.remove('hidden');
+  };
+
+  if (fullscreenImgModal && fullscreenImg) {
+    fullscreenImgModal.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomSensitivity = 0.1;
+      const delta = e.deltaY > 0 ? -zoomSensitivity : zoomSensitivity;
+      const newScale = Math.max(0.5, Math.min(imgScale + delta, 5));
+      imgScale = newScale;
+      updateImgTransform();
+    }, { passive: false });
+
+    fullscreenImgModal.addEventListener('mousedown', (e) => {
+      if (e.target === btnCloseFullscreen) return;
+      e.preventDefault();
+      isImgPanning = true;
+      imgStartX = e.clientX - imgPanX;
+      imgStartY = e.clientY - imgPanY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isImgPanning) return;
+      imgPanX = e.clientX - imgStartX;
+      imgPanY = e.clientY - imgStartY;
+      updateImgTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isImgPanning = false;
+    });
+
+    fullscreenImgModal.addEventListener('touchstart', (e) => {
+      if (e.target === btnCloseFullscreen) return;
+      if (e.touches.length === 1) {
+        isImgPanning = true;
+        imgStartX = e.touches[0].clientX - imgPanX;
+        imgStartY = e.touches[0].clientY - imgPanY;
+      } else if (e.touches.length === 2) {
+        isImgPanning = false;
+        initialPinchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialScale = imgScale;
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+      if (fullscreenImgModal.classList.contains('hidden')) return;
+      if (e.cancelable) e.preventDefault(); // Prevent scrolling while in modal
+      if (e.touches.length === 1 && isImgPanning) {
+        imgPanX = e.touches[0].clientX - imgStartX;
+        imgPanY = e.touches[0].clientY - imgStartY;
+        updateImgTransform();
+      } else if (e.touches.length === 2 && initialPinchDistance > 0) {
+        const currentDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        imgScale = Math.max(0.5, Math.min(initialScale * (currentDistance / initialPinchDistance), 5));
+        updateImgTransform();
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) {
+        initialPinchDistance = -1;
+      }
+      if (e.touches.length === 0) {
+        isImgPanning = false;
+      }
+    });
+  }
+
+  if (poiImg) {
+    poiImg.style.cursor = 'pointer';
+    poiImg.addEventListener('click', () => {
+      if (poiImg.src) openFullscreenImg(poiImg.src);
+    });
+  }
 
   const closeBottomSheet = () => {
     bottomSheet.classList.remove('open');
@@ -449,7 +554,15 @@ document.addEventListener('DOMContentLoaded', () => {
       poiImg.style.display = 'none';
       if (poiCarousel) {
         poiCarousel.style.display = 'flex';
-        poiCarousel.innerHTML = poi.imgUrls.map(url => `<img src="${encodeURI(url)}" style="min-width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;" />`).join('');
+        poiCarousel.innerHTML = poi.imgUrls.map(url => `<img src="${encodeURI(url)}" class="carousel-img-clickable" style="min-width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; cursor: pointer;" />`).join('');
+        
+        const imgs = poiCarousel.querySelectorAll('.carousel-img-clickable');
+        imgs.forEach(img => {
+          img.addEventListener('click', (e) => {
+            const target = e.target as HTMLImageElement;
+            openFullscreenImg(target.src);
+          });
+        });
 
         if (poi.imgUrls.length > 1) {
           if (carouselPrev) carouselPrev.style.display = 'flex';
@@ -495,12 +608,11 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
-    if (isAdmin) {
-      btnAction.innerText = 'Editar Punto';
-      btnAction.style.display = 'block';
+    if (isRouteMode && poi.id !== 'poi-amiudina') {
+      btnAction.innerText = customRoutePoints.find(p => p.id === poi.id) ? 'Quitar de la Ruta' : 'Añadir a mi Ruta';
       btnAction.onclick = () => {
-        closeBottomSheet();
-        openAdminModal(poi);
+        togglePointInRoute(poi);
+        openBottomSheet(poi); // Refrescar botones
       };
     } else {
       btnAction.innerText = 'Centrar en el Mapa';
@@ -526,19 +638,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (poiDistance) poiDistance.style.display = 'none';
     }
 
-    if (isRouteMode && poi.id !== 'poi-amiudina') {
-      btnAction.innerText = customRoutePoints.find(p => p.id === poi.id) ? 'Quitar de la Ruta' : 'Añadir a mi Ruta';
-      btnAction.onclick = () => {
-        togglePointInRoute(poi);
-        openBottomSheet(poi); // Refrescar botones
-      };
-    }
+    // Distancia logic removed from here as it is not needed if we are just centering
   };
 
   const adminModal = document.getElementById('admin-modal') as HTMLElement;
   const btnDeletePoi = document.getElementById('btn-delete-poi') as HTMLButtonElement;
   const btnCancelModal = document.getElementById('btn-cancel-modal') as HTMLButtonElement;
 
+  /*
   const openAdminModal = (poi: POI) => {
     (document.getElementById('poi-id') as HTMLInputElement).value = poi.id || '';
     (document.getElementById('poi-lat') as HTMLInputElement).value = poi.lat.toString();
@@ -557,6 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     adminModal.classList.remove('hidden');
   };
+  */
 
   btnCancelModal?.addEventListener('click', () => {
     adminModal.classList.add('hidden');
@@ -1416,21 +1524,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Cerrar bottom sheet al tocar en el mapa o añadir punto si es admin
-  map.on('click', (e) => {
-    if (isAdmin) {
-      const lat = e.latlng.lat;
-      const lng = e.latlng.lng;
-      openAdminModal({
-        id: '',
-        lat,
-        lng,
-        name: '',
-        description: '',
-        category: 'generico'
-      });
-    } else {
-      closeBottomSheet();
-    }
+  map.on('click', () => {
+    closeBottomSheet();
   });
 
   const populateRealTides = async () => {
@@ -1568,17 +1663,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
   };
-  const btnAdminToggle = document.getElementById('btn-admin-toggle');
-  btnAdminToggle?.addEventListener('click', () => {
-    isAdmin = !isAdmin;
-    document.body.classList.toggle('admin-mode', isAdmin);
-    btnAdminToggle.classList.toggle('active', isAdmin);
-    renderMarkers();
-    
-    // Notificación visual rápida
-    const msg = isAdmin ? 'Modo Administrador ACTIVADO. Ahora puedes arrastrar los puntos.' : 'Modo Administrador DESACTIVADO.';
-    console.log(msg);
-  });
+
 
   // loadPOIs(); // Deshabilitado para forzar que todos los dispositivos usen siempre DEFAULT_POIS
   renderMarkers();
@@ -1595,65 +1680,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (weatherInterval) clearInterval(weatherInterval);
     if (weatherFetchInterval) clearInterval(weatherFetchInterval);
     if (extremeTimeout) clearTimeout(extremeTimeout);
-  });
-  // --- 10. Lógica de Música de Fondo ---
-  const bgMusic = document.getElementById('bg-music') as HTMLAudioElement;
-  const musicToggleBtn = document.getElementById('btn-music-toggle');
-  let musicStarted = false;
-
-  const startMusic = () => {
-    if (musicStarted || !bgMusic) return;
-    
-    // Si el splash screen sigue activo, esperamos a que se oculte
-    if (splashScreen && !splashScreen.classList.contains('hidden')) {
-      return;
-    }
-    
-    bgMusic.muted = false;
-    bgMusic.volume = 0.1; 
-    bgMusic.play().then(() => {
-      musicStarted = true;
-      musicToggleBtn?.classList.remove('muted');
-    }).catch(err => {
-      console.warn("Música bloqueada:", err);
-      // Fallback: intentar al primer clic
-      document.addEventListener('click', () => {
-        if (!musicStarted) startMusic();
-      }, { once: true });
-    });
-  };
-
-  // Intentar empezar música inmediatamente (el navegador decidirá si permite el autoplay)
-  startMusic();
-
-  // Asegurar que la música arranque al terminar el splash automáticamente
-  const originalHideSplash = hideSplash;
-  // @ts-ignore
-  hideSplash = () => {
-    originalHideSplash();
-    setTimeout(startMusic, 100);
-  };
-
-  musicToggleBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!bgMusic) return;
-    
-    const icon = musicToggleBtn.querySelector('i');
-    if (bgMusic.paused) {
-      bgMusic.play();
-      musicToggleBtn.classList.remove('muted');
-      if (icon) {
-        icon.classList.remove('fa-volume-xmark');
-        icon.classList.add('fa-volume-high');
-      }
-    } else {
-      bgMusic.pause();
-      musicToggleBtn.classList.add('muted');
-      if (icon) {
-        icon.classList.remove('fa-volume-high');
-        icon.classList.add('fa-volume-xmark');
-      }
-    }
   });
 
 });
